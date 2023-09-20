@@ -18,3 +18,7 @@ user/usys.S
 
 # https://syntacore.com/page/products/sw-tools
 sc-dt
+
+# clangd
+compile_commands.json
+.cache/

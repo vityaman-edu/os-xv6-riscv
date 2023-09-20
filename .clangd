@@ -1,0 +1,13 @@
+CompileFlags:
+  Add: [-Wall]
+  Compiler: clang
+
+Diagnostics:
+  UnusedIncludes: Strict
+  ClangTidy:
+    Add: "*"
+
+InlayHints:
+  Designators: No
+  Enabled: No
+  DeducedTypes: No
