@@ -1,47 +1,46 @@
-### Инструкция по установке учебной операционной системы *xv6-riscv*
+# Installation guide of xv6-riscv operating system
 
-Эксплуатация рекомендуется в виртуальной машине на платформах Ubuntu 18.04 или Ubuntu 20.04
+It is recommended to use Ubuntu 18.04 or Ubuntu 20.04
 
-1. После настройки виртуальной машине нужно установить окружения для запуска в виде QEMU и GCC RISC-V Toolchain
-    ##### Инструкция по установке QEMU
-    - Загрузить архив с исходным кодом QEMU:
-        ```wget https://download.qemu.org/qemu-8.1.0.tar.xz```
-    - Разархивировать:
+## Install QEMU
 
-        ```tar xvJf qemu-8.1.0.tar.xz```
-    - Установить недостающие пакеты:
-        
-        ```sudo apt-get install git libglib2.0-dev libfdt-dev libpixman-1-dev zlib1g-dev ninja-build```
-    - Зайти во внутреннюю директорию и сконфигуририровать:
-    
-        ```cd qemu-8.1.0; ./configure --target-list=riscv64-softmmu; cd build; make && make install```
-    - Проверить факт установки на систему:
-        
-        ```qemu-system-riscv64 --help```
-    ##### Инструкция по установке GCC RISC-V Toolchain
-    - Загрузите пакет SW-Tools: https://drive.google.com/file/d/1T501e1kVMo0KPMUMsmlZ1P4D-Hxser8i/view?usp=drive_link
-    - Разархивируйте:
-        
-        ```tar -xvf 202308-sc-dt.tar.gz```
+```bash
+cd qemu
 
-      __Важно__! Ввиду того, что данный продукт по сей день разрабатывается, имя архива и номера версий могут отличаться от представленных в инструкции!
-    - Интересующие файлы буду находиться по адресу:
-        ```.../sc-dt/riscv-gcc/bin/```
-2. Компиляция и запуск учебной операционной системы *xv6-riscv*
-    - Загрузить исходный код операционной системы: 
+export QEMU_ARTIFACT=qemu-8.1.0
 
-        ```git clone https://github.com/mit-pdos/xv6-riscv```
-    - В корневой директории проекта открыть Makefile и добавить путь к GCC RISC-V Toolchain в переменную TOOLPREFIX:
+wget https://download.qemu.org/$QEMU_ARTIFACT.tar.xz
+tar xvJf $QEMU_ARTIFACT.tar.xz
 
-        __Важно!__ Помимо добавления пути, также надо добавить префикс для исполняемый файлов. В случае установленного тулчейна, префикс составляет *riscv64-unknown-elf-*.
-     
-        Следовательно, путь будет выглядеть так:
-            ```TOOLPREFIX=.../sc-dt/riscv-gcc/bin/riscv64-unknown-elf-```
-    - Начать компиляция и запуск учебной ОС при помощи команды:
-    
-        ```make qemu```
-        
-        В случае успешного исполнения всех шагов, данная команда приведет Вас в Shell xv6. Можете попробовать выполнить здесь некоторые команды, к примеру, *ls*.
-    - Для завершения работы QEMU используйте Ctrl-A, затем X.
+cd $QEMU_ARTIFACT
+  ./configure --target-list=riscv64-softmmu
+  cd build
+    make && make install
+  cd ..
+cd ..
 
-    
+qemu-system-riscv64 --help
+```
+
+## Install RISC Toolchain by Syntacore
+
+1. Download https://drive.google.com/file/d/1T501e1kVMo0KPMUMsmlZ1P4D-Hxser8i/view?usp=drive_link
+
+2. Unpack the archive, copy `sc-dt` to project root
+
+3. Add `sc-dt` to `.gitignore`
+
+4. Change a `TOOLPREFIX` inside make file to be `TOOLPREFIX=sc-dt/riscv-gcc/bin/riscv64-unknown-elf-`
+
+## Make the project for QEMU
+
+```bash
+make clean
+make qemu
+```
+
+## Exit
+
+```bash
+Ctrl-A + X
+```
