@@ -24,7 +24,7 @@ qemu-system-riscv64 --help
 
 ## Install RISC Toolchain by Syntacore
 
-1. Download https://drive.google.com/file/d/1T501e1kVMo0KPMUMsmlZ1P4D-Hxser8i/view?usp=drive_link
+1. Download <https://drive.google.com/file/d/1T501e1kVMo0KPMUMsmlZ1P4D-Hxser8i/view?usp=drive_link>
 
 2. Unpack the archive, copy `sc-dt` to project root
 
