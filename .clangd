@@ -6,6 +6,12 @@ Diagnostics:
   UnusedIncludes: Strict
   ClangTidy:
     Add: "*"
+    Remove: [
+      "android-cloexec-pipe",
+      "concurrency-mt-unsafe",
+      "bugprone-easily-swappable-parameters",
+      "altera-struct-pack-align",
+    ]
 
 InlayHints:
   Designators: No
