@@ -1,4 +1,5 @@
 #include "kernel/syscall.h"
+
 .globl dump_test2_asm
 dump_test2_asm:
   li s2, 2
@@ -16,6 +17,7 @@ dump_test2_asm:
   ecall
 #endif
   ret
+
 .globl dump_test3_asm
 dump_test3_asm:
   li s2, 1
@@ -33,6 +35,7 @@ dump_test3_asm:
   ecall
 #endif
   ret
+
 .globl dump_test4_asm
 dump_test4_asm:
   li s2, 2147483647

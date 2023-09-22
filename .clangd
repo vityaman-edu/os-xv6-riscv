@@ -11,6 +11,8 @@ Diagnostics:
       "concurrency-mt-unsafe",
       "bugprone-easily-swappable-parameters",
       "altera-struct-pack-align",
+      "altera-id-dependent-backward-branch",
+      "altera-unroll-loops"
     ]
 
 InlayHints:

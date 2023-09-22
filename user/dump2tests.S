@@ -1,4 +1,5 @@
 #include "kernel/syscall.h"
+
 .globl dump2_test1_asm
 dump2_test1_asm:
   li s2, 2

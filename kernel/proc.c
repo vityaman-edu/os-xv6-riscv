@@ -603,13 +603,14 @@ int either_copyin(void* dst, int user_src, uint64 src, uint64 len) {
 // Runs when user types ^P on console.
 // No lock to avoid wedging a stuck machine further.
 void procdump(void) {
-  static char* states[]
-      = {[UNUSED] "unused",
-         [USED] "used",
-         [SLEEPING] "sleep ",
-         [RUNNABLE] "runble",
-         [RUNNING] "run   ",
-         [ZOMBIE] "zombie"};
+  static char* states[] = {
+      [UNUSED] = "unused",
+      [USED] = "used",
+      [SLEEPING] = "sleep ",
+      [RUNNABLE] = "runble",
+      [RUNNING] = "run   ",
+      [ZOMBIE] = "zombie",
+  };
   struct proc* p;
   char* state;
 
@@ -624,4 +625,38 @@ void procdump(void) {
     printf("%d %s %s", p->pid, state, p->name);
     printf("\n");
   }
+}
+
+int dump() {
+  const struct proc* proc = myproc();
+  if (proc == 0) {
+    return -1;
+  }
+
+  const struct trapframe* frame = proc->trapframe;
+
+  const uint64 mask = 0x00000000FFFFFFFF;
+  const int registers[] = {
+      frame->s0 & mask,  // NOLINT
+      frame->s1 & mask,  // NOLINT
+      frame->s2 & mask,  // NOLINT
+      frame->s3 & mask,  // NOLINT
+      frame->s4 & mask,  // NOLINT
+      frame->s5 & mask,  // NOLINT
+      frame->s6 & mask,  // NOLINT
+      frame->s7 & mask,  // NOLINT
+      frame->s8 & mask,  // NOLINT
+      frame->s9 & mask,  // NOLINT
+      frame->s10 & mask, // NOLINT
+      frame->s11 & mask, // NOLINT
+  };
+
+  const int start = 2;
+  const int end = 11;
+
+  for (int i = start; i <= end; ++i) {
+    printf("s%d\t= %d (%x)\n", i, registers[i], registers[i]);
+  }
+
+  return 0;
 }

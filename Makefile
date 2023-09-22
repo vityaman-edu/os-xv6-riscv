@@ -51,7 +51,7 @@ endif
 QEMU = qemu-system-riscv64
 
 CC = $(TOOLPREFIX)gcc
-AS = $(TOOLPREFIX)gas
+AS = $(TOOLPREFIX)as
 LD = $(TOOLPREFIX)ld
 OBJCOPY = $(TOOLPREFIX)objcopy
 OBJDUMP = $(TOOLPREFIX)objdump
@@ -106,6 +106,11 @@ $U/_forktest: $U/forktest.o $(ULIB)
 	$(LD) $(LDFLAGS) -N -e main -Ttext 0 -o $U/_forktest $U/forktest.o $U/ulib.o $U/usys.o
 	$(OBJDUMP) -S $U/_forktest > $U/forktest.asm
 
+$U/dumptests.o: $U/dumptests.S $U/dumptests.c $K/syscall.h
+	$(CC) $(CFLAGS) -c -o $U/dumptests.s.o $U/dumptests.S
+	$(CC) $(CFLAGS) -c -o $U/dumptests.c.o $U/dumptests.c
+	$(LD) -r $U/dumptests.c.o $U/dumptests.s.o -o $U/dumptests.o
+
 mkfs/mkfs: mkfs/mkfs.c $K/fs.h $K/param.h
 	gcc -Werror -Wall -I. -o mkfs/mkfs mkfs/mkfs.c
 
@@ -132,7 +137,8 @@ UPROGS=\
 	$U/_grind\
 	$U/_wc\
 	$U/_zombie\
-	$U/_pingpong
+	$U/_pingpong\
+	$U/_dumptests
 
 fs.img: mkfs/mkfs README $(UPROGS)
 	mkfs/mkfs fs.img README $(UPROGS)
