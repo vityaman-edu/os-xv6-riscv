@@ -388,6 +388,7 @@ int wait(uint64 addr) {
           release(&wait_lock);
           return pid;
         }
+        
         release(&pp->lock);
       }
     }
@@ -678,12 +679,13 @@ int dump() {
 /// Acquires found process lock, so do not forget to
 /// call `release` after usage.
 /// returns `NULL` when not found.
-static struct proc* proc_with_id(int pid) {
-  struct proc* caller = myproc();
-  for (struct proc* proccess = proc; proccess < &caller[NPROC]; proccess++) {
+static struct proc* proc_acquire_by_id(int pid) {
+  for (struct proc* proccess = proc; proccess < &proc[NPROC]; ++proccess) {
+    acquire(&proccess->lock);
     if (proccess->pid == pid && !proccess->killed) {
       return proccess;
     }
+    release(&proccess->lock);
   }
   return 0;
 }
@@ -708,21 +710,25 @@ static int proc_is_child(const struct proc* this, const struct proc* parent) {
 /// @param ret_addr where to store result
 int dump2(int pid, int reg_num, uint64 ret_addr) {
   struct proc* caller = myproc();
-  struct proc* target = proc_with_id(pid);
+  struct proc* target = proc_acquire_by_id(pid);
 
   if (!target) {
     return -2;
   }
 
   if (!proc_is_child(target, caller)) {
+    release(&target->lock);
     return -1;
   }
 
   if (!(2 <= reg_num && reg_num <= 11)) { // NOLINT
+    release(&target->lock);
     return -3;
   }
 
   const uint64 value = proc_register_s_value_at(target, reg_num);
+
+  release(&target->lock);
 
   const int user_dst = 1;
   if (either_copyout(user_dst, ret_addr, (char*)(&value), sizeof(value)) < 0) {
