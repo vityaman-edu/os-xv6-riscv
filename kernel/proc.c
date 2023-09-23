@@ -449,14 +449,18 @@ void sched(void) {
   int intena;
   struct proc* p = myproc();
 
-  if (!holding(&p->lock))
+  if (!holding(&p->lock)) {
     panic("sched p->lock");
-  if (mycpu()->noff != 1)
+  }
+  if (mycpu()->noff != 1) {
     panic("sched locks");
-  if (p->state == RUNNING)
+  }
+  if (p->state == RUNNING) {
     panic("sched running");
-  if (intr_get())
+  }
+  if (intr_get()) {
     panic("sched interruptible");
+  }
 
   intena = mycpu()->intena;
   swtch(&p->context, &mycpu()->context);
@@ -627,35 +631,102 @@ void procdump(void) {
   }
 }
 
+static uint64 proc_register_s_value_at(const struct proc* this, int n) {
+  switch (n) {
+  case 0: // NOLINT
+    return this->trapframe->s0;
+  case 1: // NOLINT
+    return this->trapframe->s1;
+  case 2: // NOLINT
+    return this->trapframe->s2;
+  case 3: // NOLINT
+    return this->trapframe->s3;
+  case 4: // NOLINT
+    return this->trapframe->s4;
+  case 5: // NOLINT
+    return this->trapframe->s5;
+  case 6: // NOLINT
+    return this->trapframe->s6;
+  case 7: // NOLINT
+    return this->trapframe->s7;
+  case 8: // NOLINT
+    return this->trapframe->s8;
+  case 9: // NOLINT
+    return this->trapframe->s9;
+  case 10: // NOLINT
+    return this->trapframe->s10;
+  case 11: // NOLINT
+    return this->trapframe->s11;
+  default:
+    panic("registers s are numbered in range 0-11");
+  }
+}
+
 int dump() {
   const struct proc* proc = myproc();
-  if (proc == 0) {
+
+  const uint64 mask = 0x00000000FFFFFFFF;
+  for (int i = 2; i <= 11; ++i) { // NOLINT
+    const uint64 value = proc_register_s_value_at(proc, i);
+    const int display = (int)(value & mask);
+    printf("s%d\t= %d (%x)\n", i, display, display);
+  }
+
+  return 0;
+}
+
+/// Acquires found process lock, so do not forget to
+/// call `release` after usage.
+/// returns `NULL` when not found.
+static struct proc* proc_with_id(int pid) {
+  struct proc* caller = myproc();
+  for (struct proc* proccess = proc; proccess < &caller[NPROC]; proccess++) {
+    if (proccess->pid == pid && !proccess->killed) {
+      return proccess;
+    }
+  }
+  return 0;
+}
+
+/// Checks that `this` is a child process of `parent`.
+/// Caller should hold `parent` and `this` locks.
+static int proc_is_child(const struct proc* this, const struct proc* parent) {
+  for (const struct proc* process = this; //
+       process != 0;
+       process = process->parent) {
+    if (process->pid == parent->pid) {
+      return 1;
+    }
+  }
+  return 0;
+}
+
+/// Read register `s{reg_num}` to address `return_value`
+///
+/// @param pid process id to read register
+/// @param reg_num in range [2, 11]
+/// @param ret_addr where to store result
+int dump2(int pid, int reg_num, uint64 ret_addr) {
+  struct proc* caller = myproc();
+  struct proc* target = proc_with_id(pid);
+
+  if (!target) {
+    return -2;
+  }
+
+  if (!proc_is_child(target, caller)) {
     return -1;
   }
 
-  const struct trapframe* frame = proc->trapframe;
+  if (!(2 <= reg_num && reg_num <= 11)) { // NOLINT
+    return -3;
+  }
 
-  const uint64 mask = 0x00000000FFFFFFFF;
-  const int registers[] = {
-      frame->s0 & mask,  // NOLINT
-      frame->s1 & mask,  // NOLINT
-      frame->s2 & mask,  // NOLINT
-      frame->s3 & mask,  // NOLINT
-      frame->s4 & mask,  // NOLINT
-      frame->s5 & mask,  // NOLINT
-      frame->s6 & mask,  // NOLINT
-      frame->s7 & mask,  // NOLINT
-      frame->s8 & mask,  // NOLINT
-      frame->s9 & mask,  // NOLINT
-      frame->s10 & mask, // NOLINT
-      frame->s11 & mask, // NOLINT
-  };
+  const uint64 value = proc_register_s_value_at(target, reg_num);
 
-  const int start = 2;
-  const int end = 11;
-
-  for (int i = start; i <= end; ++i) {
-    printf("s%d\t= %d (%x)\n", i, registers[i], registers[i]);
+  const int user_dst = 1;
+  if (either_copyout(user_dst, ret_addr, (char*)(&value), sizeof(value)) < 0) {
+    return -4;
   }
 
   return 0;

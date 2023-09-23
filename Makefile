@@ -111,6 +111,11 @@ $U/dumptests.o: $U/dumptests.S $U/dumptests.c $K/syscall.h
 	$(CC) $(CFLAGS) -c -o $U/dumptests.c.o $U/dumptests.c
 	$(LD) -r $U/dumptests.c.o $U/dumptests.s.o -o $U/dumptests.o
 
+$U/dump2tests.o: $U/dump2tests.S $U/dump2tests.c $K/syscall.h
+	$(CC) $(CFLAGS) -c -o $U/dump2tests.s.o $U/dump2tests.S
+	$(CC) $(CFLAGS) -c -o $U/dump2tests.c.o $U/dump2tests.c
+	$(LD) -r $U/dump2tests.c.o $U/dump2tests.s.o -o $U/dump2tests.o
+
 mkfs/mkfs: mkfs/mkfs.c $K/fs.h $K/param.h
 	gcc -Werror -Wall -I. -o mkfs/mkfs mkfs/mkfs.c
 
@@ -138,7 +143,8 @@ UPROGS=\
 	$U/_wc\
 	$U/_zombie\
 	$U/_pingpong\
-	$U/_dumptests
+	$U/_dumptests\
+	$U/_dump2tests
 
 fs.img: mkfs/mkfs README $(UPROGS)
 	mkfs/mkfs fs.img README $(UPROGS)

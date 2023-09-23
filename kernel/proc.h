@@ -1,3 +1,5 @@
+#include "kernel/types.h"
+
 // Saved registers for kernel context switches.
 struct context {
   uint64 ra;
