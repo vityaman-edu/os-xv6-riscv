@@ -4,8 +4,8 @@
 #include "kernel/hardware/riscv.h"
 #include "kernel/defs.h"
 
+#include "kernel/lib/list.h"
 #include "buddy.h"
-#include "list.h"
 #include "bits.h"
 
 // The smallest block size

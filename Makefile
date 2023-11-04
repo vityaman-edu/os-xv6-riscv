@@ -29,7 +29,7 @@ OBJS = \
   $K/sync/spinlock.o \
   $K/sync/sleeplock.o \
   $K/alloc/kalloc.o \
-	$K/alloc/list.o\
+	$K/lib/list.o\
 	$K/alloc/buddy.o\
 	$K/alloc/bits.o
 
