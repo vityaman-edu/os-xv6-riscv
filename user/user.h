@@ -1,4 +1,4 @@
-#include "kernel/types.h"
+#include "kernel/core/type.h"
 
 struct stat;
 

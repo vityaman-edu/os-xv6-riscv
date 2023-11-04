@@ -2,15 +2,16 @@
 // run random system calls in parallel forever.
 //
 
-#include "kernel/param.h"
-#include "kernel/types.h"
-#include "kernel/stat.h"
+#include "kernel/core/param.h"
+#include "kernel/core/type.h"
+#include "kernel/file/stat.h"
 #include "user/user.h"
-#include "kernel/fs.h"
-#include "kernel/fcntl.h"
-#include "kernel/syscall.h"
-#include "kernel/memlayout.h"
-#include "kernel/riscv.h"
+#include "kernel/file/fs.h"
+#include "kernel/file/stat.h"
+#include "kernel/syscall/syscall.h"
+#include "kernel/hardware/memlayout.h"
+#include "kernel/hardware/riscv.h"
+#include "kernel/file/fcntl.h"
 
 // from FreeBSD.
 int do_rand(unsigned long* ctx) {

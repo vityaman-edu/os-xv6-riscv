@@ -1,10 +1,11 @@
-#include "kernel/param.h"
-#include "kernel/types.h"
-#include "kernel/stat.h"
-#include "kernel/riscv.h"
-#include "kernel/fcntl.h"
-#include "kernel/memlayout.h"
+#include "kernel/core/param.h"
+#include "kernel/core/type.h"
+#include "kernel/file/stat.h"
+#include "kernel/hardware/riscv.h"
+#include "kernel/file/stat.h"
+#include "kernel/hardware/memlayout.h"
 #include "user/user.h"
+#include "kernel/file/fcntl.h"
 
 void test0() {
   enum { NCHILD = 50, NFD = 10 };

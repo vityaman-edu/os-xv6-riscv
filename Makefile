@@ -2,36 +2,36 @@ K=kernel
 U=user
 
 OBJS = \
-  $K/entry.o \
-  $K/start.o \
+  $K/startup/entry.o \
+  $K/startup/start.o \
+  $K/startup/main.o \
+  $K/startup/kernelvec.o \
+  $K/startup/trampoline.o \
   $K/console.o \
-  $K/printf.o \
-  $K/uart.o \
-  $K/kalloc.o \
-  $K/spinlock.o \
-  $K/string.o \
-  $K/main.o \
-  $K/vm.o \
-  $K/proc.o \
-  $K/swtch.o \
-  $K/trampoline.o \
+  $K/hardware/uart.o \
+  $K/hardware/plic.o \
+  $K/hardware/virtio_disk.o\
+  $K/lib/printf.o \
+  $K/lib/string.o \
+  $K/memory/vm.o \
+  $K/process/proc.o \
+  $K/process/swtch.o \
+  $K/process/exec.o \
   $K/trap.o \
-  $K/syscall.o \
-  $K/sysproc.o \
-  $K/bio.o \
-  $K/fs.o \
+  $K/syscall/syscall.o \
+  $K/syscall/sysproc.o \
+  $K/syscall/sysfile.o \
   $K/log.o \
-  $K/sleeplock.o \
-  $K/file.o \
-  $K/pipe.o \
-  $K/exec.o \
-  $K/sysfile.o \
-  $K/kernelvec.o \
-  $K/plic.o \
-  $K/virtio_disk.o\
-	$K/list.o\
-	$K/buddy.o\
-	$K/bits.o
+  $K/file/fs.o \
+  $K/file/bio.o \
+  $K/file/file.o \
+  $K/file/pipe.o \
+  $K/sync/spinlock.o \
+  $K/sync/sleeplock.o \
+  $K/alloc/kalloc.o \
+	$K/alloc/list.o\
+	$K/alloc/buddy.o\
+	$K/alloc/bits.o
 
 # riscv64-unknown-elf- or riscv64-linux-gnu-
 # perhaps in /opt/riscv/bin
@@ -76,8 +76,8 @@ endif
 
 LDFLAGS = -z max-page-size=4096
 
-$K/kernel: $(OBJS) $K/kernel.ld $U/initcode
-	$(LD) $(LDFLAGS) -T $K/kernel.ld -o $K/kernel $(OBJS) 
+$K/kernel: $(OBJS) $K/startup/kernel.ld $U/initcode
+	$(LD) $(LDFLAGS) -T $K/startup/kernel.ld -o $K/kernel $(OBJS) 
 	$(OBJDUMP) -S $K/kernel > $K/kernel.asm
 	$(OBJDUMP) -t $K/kernel | sed '1,/SYMBOL TABLE/d; s/ .* / /; /^$$/d' > $K/kernel.sym
 
@@ -109,17 +109,17 @@ $U/_forktest: $U/forktest.o $(ULIB)
 	$(LD) $(LDFLAGS) -N -e main -Ttext 0 -o $U/_forktest $U/forktest.o $U/ulib.o $U/usys.o
 	$(OBJDUMP) -S $U/_forktest > $U/forktest.asm
 
-$U/dumptests.o: $U/dumptests.S $U/dumptests.c $K/syscall.h
+$U/dumptests.o: $U/dumptests.S $U/dumptests.c $K/syscall/syscall.h
 	$(CC) $(CFLAGS) -c -o $U/dumptests.s.o $U/dumptests.S
 	$(CC) $(CFLAGS) -c -o $U/dumptests.c.o $U/dumptests.c
 	$(LD) -r $U/dumptests.c.o $U/dumptests.s.o -o $U/dumptests.o
 
-$U/dump2tests.o: $U/dump2tests.S $U/dump2tests.c $K/syscall.h
+$U/dump2tests.o: $U/dump2tests.S $U/dump2tests.c $K/syscall/syscall.h
 	$(CC) $(CFLAGS) -c -o $U/dump2tests.s.o $U/dump2tests.S
 	$(CC) $(CFLAGS) -c -o $U/dump2tests.c.o $U/dump2tests.c
 	$(LD) -r $U/dump2tests.c.o $U/dump2tests.s.o -o $U/dump2tests.o
 
-mkfs/mkfs: mkfs/mkfs.c $K/fs.h $K/param.h
+mkfs/mkfs: mkfs/mkfs.c $K/file/fs.h $K/core/param.h
 	gcc -Werror -Wall -I. -o mkfs/mkfs mkfs/mkfs.c
 
 # Prevent deletion of intermediate files, e.g. cat.o, after first build, so
@@ -157,7 +157,7 @@ fs.img: mkfs/mkfs README $(UPROGS)
 
 clean: 
 	rm -f *.tex *.dvi *.idx *.aux *.log *.ind *.ilg \
-	*/*.o */*.d */*.asm */*.sym \
+	*/*.o */*/*.o */*.d */*/*.d */*.asm */*.sym \
 	$U/initcode $U/initcode.out $K/kernel fs.img \
 	mkfs/mkfs .gdbinit \
         $U/usys.S \

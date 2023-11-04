@@ -2,14 +2,14 @@
 // ramdisk that uses the disk image loaded by qemu -initrd fs.img
 //
 
-#include "types.h"
-#include "riscv.h"
+#include "kernel/core/type.h"
+#include "kernel/hardware/riscv.h"
 #include "defs.h"
-#include "param.h"
+#include "kernel/core/param.h"
 #include "memlayout.h"
-#include "spinlock.h"
-#include "sleeplock.h"
-#include "fs.h"
+#include "sync/spinlock.h"
+#include "sync/sleeplock.h"
+#include "file/fs.h"
 #include "buf.h"
 
 void ramdiskinit(void) {}

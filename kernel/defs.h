@@ -1,5 +1,5 @@
-#include "types.h"
-#include "riscv.h"
+#include "kernel/core/type.h"
+#include "kernel/hardware/riscv.h"
 
 struct buf;
 struct context;
