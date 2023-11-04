@@ -19,37 +19,54 @@ struct pipe {
   int writeopen; // write fd is still open
 };
 
-int pipealloc(struct file** f0, struct file** f1) {
-  struct pipe* pi;
+int pipealloc(struct file** rfd, struct file** wfd) {
+  struct pipe* pipe = nullptr;
+  *rfd = *wfd = nullptr;
 
-  pi = 0;
-  *f0 = *f1 = 0;
-  if ((*f0 = filealloc()) == 0 || (*f1 = filealloc()) == 0)
+  *rfd = filealloc();
+  if (*rfd == nullptr) {
     goto bad;
-  if ((pi = (struct pipe*)kalloc()) == 0)
+  }
+
+  *wfd = filealloc();
+  if ((*wfd) == nullptr) {
     goto bad;
-  pi->readopen = 1;
-  pi->writeopen = 1;
-  pi->nwrite = 0;
-  pi->nread = 0;
-  initlock(&pi->lock, "pipe");
-  (*f0)->type = FD_PIPE;
-  (*f0)->readable = 1;
-  (*f0)->writable = 0;
-  (*f0)->pipe = pi;
-  (*f1)->type = FD_PIPE;
-  (*f1)->readable = 0;
-  (*f1)->writable = 1;
-  (*f1)->pipe = pi;
+  }
+
+  pipe = (struct pipe*)kalloc();
+  if (pipe == nullptr) {
+    goto bad;
+  }
+
+  pipe->readopen = 1;
+  pipe->writeopen = 1;
+  pipe->nwrite = 0;
+  pipe->nread = 0;
+
+  initlock(&pipe->lock, "pipe");
+
+  (*rfd)->type = FD_PIPE;
+  (*rfd)->readable = true;
+  (*rfd)->writable = false;
+  (*rfd)->pipe = pipe;
+
+  (*wfd)->type = FD_PIPE;
+  (*wfd)->readable = false;
+  (*wfd)->writable = true;
+  (*wfd)->pipe = pipe;
+
   return 0;
 
 bad:
-  if (pi)
-    kfree((char*)pi);
-  if (*f0)
-    fileclose(*f0);
-  if (*f1)
-    fileclose(*f1);
+  if (pipe) {
+    kfree((char*)pipe);
+  }
+  if (*rfd) {
+    fileclose(*rfd);
+  }
+  if (*wfd) {
+    fileclose(*wfd);
+  }
   return -1;
 }
 

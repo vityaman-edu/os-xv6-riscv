@@ -60,15 +60,17 @@ uint64 sys_dup(void) {
 }
 
 uint64 sys_read(void) {
-  struct file* f;
-  int n;
-  uint64 p;
+  struct file* file = nullptr;
+  uint64 addr = 0;
+  int count = 0;
 
-  argaddr(1, &p);
-  argint(2, &n);
-  if (argfd(0, 0, &f) < 0)
+  argaddr(1, &addr);
+  argint(2, &count);
+  if (argfd(0, 0, &file) < 0) {
     return -1;
-  return fileread(f, p, n);
+  }
+
+  return fileread(file, addr, count);
 }
 
 uint64 sys_write(void) {

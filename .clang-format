@@ -17,3 +17,4 @@ BreakBeforeBinaryOperators: All
 AlignArrayOfStructures: Left
 FixNamespaceComments: false
 InsertTrailingCommas: Wrapped
+AllowShortFunctionsOnASingleLine: None
