@@ -22,7 +22,7 @@ void fileinit(void) {
 
 /// Allocate a file structure.
 struct file* filealloc(void) {
-  struct file* file = bd_malloc(sizeof(struct file));
+  struct file* file = buddy_malloc(sizeof(struct file));
 
   file->type = FD_NONE;
   file->ref = 1;
@@ -77,7 +77,7 @@ void fileclose(struct file* file) {
     end_op();
   }
 
-  bd_free(file);
+  buddy_free(file);
 }
 
 /// Get metadata about file f.

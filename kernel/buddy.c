@@ -8,13 +8,11 @@
 #include "list.h"
 #include "bits.h"
 
-// Buddy allocator
-
 // The smallest block size
 #define LEAF_SIZE 16
 
 // Largest index in bd_sizes array
-#define MAXSIZE (buddy_sizes_count - 1)
+#define MAXSIZE (buddy_size_groups_count - 1)
 
 // Size of block at size k
 #define BLK_SIZE(k) ((1L << (k)) * LEAF_SIZE)
@@ -26,8 +24,6 @@
 // Round up to the next multiple of sz
 #define ROUNDUP(n, sz) (((((n)-1) / (sz)) + 1) * (sz))
 
-typedef struct list buddy_list;
-
 // The allocator has sz_info for each size k. Each sz_info has a free
 // list, an array alloc to keep track which blocks have been
 // allocated, and an split array to to keep track which blocks have
@@ -35,14 +31,14 @@ typedef struct list buddy_list;
 // allocator uses 1 bit per block (thus, one char records the info of
 // 8 blocks).
 typedef struct {
-  buddy_list freelist;
+  struct list freelist;
   bits pair_alloc_xor;
   bits split;
-} buddy_size_info;
+} buddy_size_group_info;
 
 // The array of `buddy_size_info`
-static buddy_size_info* buddy_sizes;
-static int buddy_sizes_count;
+static buddy_size_group_info* buddy_size_groups;
+static int buddy_size_groups_count;
 
 // Start address of memory managed by the buddy allocator
 static void* buddy_base;
@@ -59,14 +55,14 @@ int buddy_pair_index(int block_index) {
 
 // Print buddy's data structures
 void buddy_print() {
-  for (int k = 0; k < buddy_sizes_count; k++) {
+  for (int k = 0; k < buddy_size_groups_count; k++) {
     printf("size %d (blksz %d nblk %d): free list: ", k, BLK_SIZE(k), NBLK(k));
-    lst_print(&buddy_sizes[k].freelist);
+    lst_print(&buddy_size_groups[k].freelist);
     printf("  pair_xor_alloc:");
-    bits_print((fat_bits){buddy_sizes[k].pair_alloc_xor, NBLK(k) / 2});
+    bits_print((fat_bits){buddy_size_groups[k].pair_alloc_xor, NBLK(k) / 2});
     if (k > 0) {
       printf("  split:");
-      bits_print((fat_bits){buddy_sizes[k].split, NBLK(k)});
+      bits_print((fat_bits){buddy_size_groups[k].split, NBLK(k)});
     }
   }
 }
@@ -95,34 +91,34 @@ void* addr(int k, int bi) {
 }
 
 // allocate nbytes, but malloc won't return anything smaller than LEAF_SIZE
-void* bd_malloc(uint64 nbytes) {
+void* buddy_malloc(uint64 nbytes) {
   int fk, k;
 
   acquire(&buddy_lock);
 
   // Find a free block >= nbytes, starting with smallest k possible
   fk = firstk(nbytes);
-  for (k = fk; k < buddy_sizes_count; k++) {
-    if (!lst_empty(&buddy_sizes[k].freelist))
+  for (k = fk; k < buddy_size_groups_count; k++) {
+    if (!lst_empty(&buddy_size_groups[k].freelist))
       break;
   }
-  if (k >= buddy_sizes_count) { // No free blocks?
+  if (k >= buddy_size_groups_count) { // No free blocks?
     release(&buddy_lock);
     return 0;
   }
 
   // Found a block; pop it and potentially split it.
-  char* p = lst_pop(&buddy_sizes[k].freelist);
-  bits_switch(buddy_sizes[k].pair_alloc_xor, buddy_pair_index(blk_index(k, p)));
+  char* p = lst_pop(&buddy_size_groups[k].freelist);
+  bits_switch(buddy_size_groups[k].pair_alloc_xor, buddy_pair_index(blk_index(k, p)));
   for (; k > fk; k--) {
     // split a block at size k and mark one half allocated at size k-1
     // and put the buddy on the free list at size k-1
     char* q = p + BLK_SIZE(k - 1); // p's buddy
-    bits_set(buddy_sizes[k].split, blk_index(k, p));
+    bits_set(buddy_size_groups[k].split, blk_index(k, p));
     bits_switch(
-        buddy_sizes[k - 1].pair_alloc_xor, buddy_pair_index(blk_index(k - 1, p))
+        buddy_size_groups[k - 1].pair_alloc_xor, buddy_pair_index(blk_index(k - 1, p))
     );
-    lst_push(&buddy_sizes[k - 1].freelist, q);
+    lst_push(&buddy_size_groups[k - 1].freelist, q);
   }
   release(&buddy_lock);
 
@@ -131,8 +127,8 @@ void* bd_malloc(uint64 nbytes) {
 
 // Find the size of the block that p points to.
 int size(char* p) {
-  for (int k = 0; k < buddy_sizes_count; k++) {
-    if (bits_is_set(buddy_sizes[k + 1].split, blk_index(k + 1, p))) {
+  for (int k = 0; k < buddy_size_groups_count; k++) {
+    if (bits_is_set(buddy_size_groups[k + 1].split, blk_index(k + 1, p))) {
       return k;
     }
   }
@@ -141,7 +137,7 @@ int size(char* p) {
 
 // Free memory pointed to by p, which was earlier allocated using
 // bd_malloc.
-void bd_free(void* p) {
+void buddy_free(void* p) {
   void* q;
   int k;
 
@@ -150,8 +146,8 @@ void bd_free(void* p) {
     int bi = blk_index(k, p);
     int pi = buddy_pair_index(bi);
     int buddy = (bi % 2 == 0) ? bi + 1 : bi - 1;
-    bits_switch(buddy_sizes[k].pair_alloc_xor, pi);
-    if (bits_is_set(buddy_sizes[k].pair_alloc_xor, pi)) {
+    bits_switch(buddy_size_groups[k].pair_alloc_xor, pi);
+    if (bits_is_set(buddy_size_groups[k].pair_alloc_xor, pi)) {
       // buddy is allocated, break out of loop
       break;
     }
@@ -163,9 +159,9 @@ void bd_free(void* p) {
     }
     // at size k+1, mark that the merged buddy pair isn't split
     // anymore
-    bits_clear(buddy_sizes[k + 1].split, blk_index(k + 1, p));
+    bits_clear(buddy_size_groups[k + 1].split, blk_index(k + 1, p));
   }
-  lst_push(&buddy_sizes[k].freelist, p);
+  lst_push(&buddy_size_groups[k].freelist, p);
   release(&buddy_lock);
 }
 
@@ -193,15 +189,15 @@ void bd_mark(void* start, void* stop) {
   if (((uint64)start % LEAF_SIZE != 0) || ((uint64)stop % LEAF_SIZE != 0))
     panic("bd_mark");
 
-  for (int k = 0; k < buddy_sizes_count; k++) {
+  for (int k = 0; k < buddy_size_groups_count; k++) {
     bi = blk_index(k, start);
     bj = blk_index_next(k, stop);
     for (; bi < bj; bi++) {
       if (k > 0) {
         // if a block is allocated at size k, mark it as split too.
-        bits_set(buddy_sizes[k].split, bi);
+        bits_set(buddy_size_groups[k].split, bi);
       }
-      bits_switch(buddy_sizes[k].pair_alloc_xor, buddy_pair_index(bi));
+      bits_switch(buddy_size_groups[k].pair_alloc_xor, buddy_pair_index(bi));
     }
   }
 }
@@ -209,11 +205,11 @@ void bd_mark(void* start, void* stop) {
 int bd_initfree_pair_right(int k, int bi) {
   int buddy = (bi % 2 == 0) ? bi + 1 : bi - 1;
   int free = 0;
-  if (bits_is_set(buddy_sizes[k].pair_alloc_xor, buddy_pair_index(bi))) {
+  if (bits_is_set(buddy_size_groups[k].pair_alloc_xor, buddy_pair_index(bi))) {
     // one of the pair is free
     free = BLK_SIZE(k);
     lst_push(
-        &buddy_sizes[k].freelist, addr(k, buddy)
+        &buddy_size_groups[k].freelist, addr(k, buddy)
     ); // put buddy on free list
   }
   return free;
@@ -223,10 +219,10 @@ int bd_initfree_pair_right(int k, int bi) {
 // buddy on the free list at size k.
 int bd_initfree_pair_left(int k, int bi) {
   int free = 0;
-  if (bits_is_set(buddy_sizes[k].pair_alloc_xor, buddy_pair_index(bi))) {
+  if (bits_is_set(buddy_size_groups[k].pair_alloc_xor, buddy_pair_index(bi))) {
     // one of the pair is free
     free = BLK_SIZE(k);
-    lst_push(&buddy_sizes[k].freelist, addr(k, bi)); // put bi on free list
+    lst_push(&buddy_size_groups[k].freelist, addr(k, bi)); // put bi on free list
   }
   return free;
 }
@@ -273,7 +269,7 @@ int bd_mark_unavailable(void* end, void* left) {
 }
 
 // Initialize the buddy allocator: it manages memory from [base, end).
-void bd_init(void* base, void* end) {
+void buddy_init(void* base, void* end) {
   byte* p = (byte*)ROUNDUP((uint64)base, LEAF_SIZE);
   int sz;
 
@@ -281,38 +277,38 @@ void bd_init(void* base, void* end) {
   buddy_base = (void*)p;
 
   // compute the number of sizes we need to manage [base, end)
-  buddy_sizes_count = log2(((byte*)end - p) / LEAF_SIZE) + 1;
+  buddy_size_groups_count = log2(((byte*)end - p) / LEAF_SIZE) + 1;
   if ((byte*)end - p > BLK_SIZE(MAXSIZE)) {
-    buddy_sizes_count++; // round up to the next power of 2
+    buddy_size_groups_count++; // round up to the next power of 2
   }
 
   printf(
       "bd: memory sz is %d bytes; allocate an size array of length %d\n",
       (byte*)end - p,
-      buddy_sizes_count
+      buddy_size_groups_count
   );
 
   // allocate bd_sizes array
-  buddy_sizes = (buddy_size_info*)p;
-  p += sizeof(buddy_size_info) * buddy_sizes_count;
-  memset(buddy_sizes, 0, sizeof(buddy_size_info) * buddy_sizes_count);
+  buddy_size_groups = (buddy_size_group_info*)p;
+  p += sizeof(buddy_size_group_info) * buddy_size_groups_count;
+  memset(buddy_size_groups, 0, sizeof(buddy_size_group_info) * buddy_size_groups_count);
 
   // initialize free list and allocate the alloc array for each size k
-  for (int k = 0; k < buddy_sizes_count; k++) {
-    lst_init(&buddy_sizes[k].freelist);
+  for (int k = 0; k < buddy_size_groups_count; k++) {
+    lst_init(&buddy_size_groups[k].freelist);
     sz = sizeof(char) * ROUNDUP(NBLK(k), 8) / 8;
     sz = sz / 2 > 0 ? sz / 2 : 1;
-    buddy_sizes[k].pair_alloc_xor.as_bytes = p;
-    memset(buddy_sizes[k].pair_alloc_xor.as_bytes, 0, sz);
+    buddy_size_groups[k].pair_alloc_xor.as_bytes = p;
+    memset(buddy_size_groups[k].pair_alloc_xor.as_bytes, 0, sz);
     p += sz;
   }
 
   // allocate the split array for each size k, except for k = 0, since
   // we will not split blocks of size k = 0, the smallest size.
-  for (int k = 1; k < buddy_sizes_count; k++) {
+  for (int k = 1; k < buddy_size_groups_count; k++) {
     sz = sizeof(char) * (ROUNDUP(NBLK(k), 8)) / 8;
-    buddy_sizes[k].split.as_bytes = p;
-    memset(buddy_sizes[k].split.as_bytes, 0, sz);
+    buddy_size_groups[k].split.as_bytes = p;
+    memset(buddy_size_groups[k].split.as_bytes, 0, sz);
     p += sz;
   }
   p = (byte*)ROUNDUP((uint64)p, LEAF_SIZE);
