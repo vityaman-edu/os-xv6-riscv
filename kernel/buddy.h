@@ -5,7 +5,9 @@
 
 #include "types.h"
 
-typedef struct list Bd_list;
+/// Initialize the buddy allocator:
+/// it manages memory from [base, end).
+void bd_init(void* base, void* end);
 
 /// Print buddy's data structures
 void bd_print();
@@ -16,10 +18,6 @@ void* bd_malloc(uint64 nbytes);
 
 /// Free memory pointed to by p, which was earlier
 /// allocated using bd_malloc.
-void bd_free(void* p);
-
-/// Initialize the buddy allocator:
-/// it manages memory from [base, end).
-void bd_init(void* base, void* end);
+void bd_free(void* addr);
 
 #endif // XV6_KERNEL_BUDDY_H
