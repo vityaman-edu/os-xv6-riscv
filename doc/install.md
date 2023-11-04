@@ -2,6 +2,15 @@
 
 It is recommended to use Ubuntu 18.04 or Ubuntu 20.04
 
+## Install dependencies
+
+```bash
+sudo dnf install ninja-build
+sudo dnf install glib2-devel
+sudo dnf install pixman-devel
+sudo dnf install libfdt-devel
+```
+
 ## Install QEMU
 
 ```bash
@@ -14,9 +23,7 @@ tar xvJf $QEMU_ARTIFACT.tar.xz
 
 cd $QEMU_ARTIFACT
   ./configure --target-list=riscv64-softmmu
-  cd build
-    make && make install
-  cd ..
+  (cd build; make && make install)
 cd ..
 
 qemu-system-riscv64 --help
