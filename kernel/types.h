@@ -1,3 +1,6 @@
+#ifndef XV6_KERNEL_TYPES_H
+#define XV6_KERNEL_TYPES_H
+
 typedef unsigned int uint;
 typedef unsigned short ushort;
 typedef unsigned char uchar;
@@ -16,3 +19,5 @@ typedef int bool;
 #define nullptr 0
 
 typedef uint64 pde_t;
+
+#endif // XV6_KERNEL_TYPES_H

@@ -9,9 +9,6 @@
 /// it manages memory from [base, end).
 void bd_init(void* base, void* end);
 
-/// Print buddy's data structures
-void bd_print();
-
 /// allocate nbytes, but malloc won't return anything
 /// smaller than LEAF_SIZE
 void* bd_malloc(uint64 nbytes);
