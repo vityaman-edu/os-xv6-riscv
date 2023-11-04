@@ -388,6 +388,7 @@ int wait(uint64 addr) {
           release(&wait_lock);
           return pid;
         }
+        
         release(&pp->lock);
       }
     }
@@ -449,14 +450,18 @@ void sched(void) {
   int intena;
   struct proc* p = myproc();
 
-  if (!holding(&p->lock))
+  if (!holding(&p->lock)) {
     panic("sched p->lock");
-  if (mycpu()->noff != 1)
+  }
+  if (mycpu()->noff != 1) {
     panic("sched locks");
-  if (p->state == RUNNING)
+  }
+  if (p->state == RUNNING) {
     panic("sched running");
-  if (intr_get())
+  }
+  if (intr_get()) {
     panic("sched interruptible");
+  }
 
   intena = mycpu()->intena;
   swtch(&p->context, &mycpu()->context);
@@ -603,13 +608,14 @@ int either_copyin(void* dst, int user_src, uint64 src, uint64 len) {
 // Runs when user types ^P on console.
 // No lock to avoid wedging a stuck machine further.
 void procdump(void) {
-  static char* states[]
-      = {[UNUSED] "unused",
-         [USED] "used",
-         [SLEEPING] "sleep ",
-         [RUNNABLE] "runble",
-         [RUNNING] "run   ",
-         [ZOMBIE] "zombie"};
+  static char* states[] = {
+      [UNUSED] = "unused",
+      [USED] = "used",
+      [SLEEPING] = "sleep ",
+      [RUNNABLE] = "runble",
+      [RUNNING] = "run   ",
+      [ZOMBIE] = "zombie",
+  };
   struct proc* p;
   char* state;
 
@@ -624,4 +630,110 @@ void procdump(void) {
     printf("%d %s %s", p->pid, state, p->name);
     printf("\n");
   }
+}
+
+static uint64 proc_register_s_value_at(const struct proc* this, int n) {
+  switch (n) {
+  case 0: // NOLINT
+    return this->trapframe->s0;
+  case 1: // NOLINT
+    return this->trapframe->s1;
+  case 2: // NOLINT
+    return this->trapframe->s2;
+  case 3: // NOLINT
+    return this->trapframe->s3;
+  case 4: // NOLINT
+    return this->trapframe->s4;
+  case 5: // NOLINT
+    return this->trapframe->s5;
+  case 6: // NOLINT
+    return this->trapframe->s6;
+  case 7: // NOLINT
+    return this->trapframe->s7;
+  case 8: // NOLINT
+    return this->trapframe->s8;
+  case 9: // NOLINT
+    return this->trapframe->s9;
+  case 10: // NOLINT
+    return this->trapframe->s10;
+  case 11: // NOLINT
+    return this->trapframe->s11;
+  default:
+    panic("registers s are numbered in range 0-11");
+  }
+}
+
+int dump() {
+  const struct proc* proc = myproc();
+
+  const uint64 mask = 0x00000000FFFFFFFF;
+  for (int i = 2; i <= 11; ++i) { // NOLINT
+    const uint64 value = proc_register_s_value_at(proc, i);
+    const int display = (int)(value & mask);
+    printf("s%d\t= %d (%x)\n", i, display, display);
+  }
+
+  return 0;
+}
+
+/// Acquires found process lock, so do not forget to
+/// call `release` after usage.
+/// returns `NULL` when not found.
+static struct proc* proc_acquire_by_id(int pid) {
+  for (struct proc* proccess = proc; proccess < &proc[NPROC]; ++proccess) {
+    acquire(&proccess->lock);
+    if (proccess->pid == pid && !proccess->killed) {
+      return proccess;
+    }
+    release(&proccess->lock);
+  }
+  return 0;
+}
+
+/// Checks that `this` is a child process of `parent`.
+/// Caller should hold `parent` and `this` locks.
+static int proc_is_child(const struct proc* this, const struct proc* parent) {
+  for (const struct proc* process = this; //
+       process != 0;
+       process = process->parent) {
+    if (process->pid == parent->pid) {
+      return 1;
+    }
+  }
+  return 0;
+}
+
+/// Read register `s{reg_num}` to address `return_value`
+///
+/// @param pid process id to read register
+/// @param reg_num in range [2, 11]
+/// @param ret_addr where to store result
+int dump2(int pid, int reg_num, uint64 ret_addr) {
+  struct proc* caller = myproc();
+  struct proc* target = proc_acquire_by_id(pid);
+
+  if (!target) {
+    return -2;
+  }
+
+  if (!proc_is_child(target, caller)) {
+    release(&target->lock);
+    return -1;
+  }
+
+  if (!(2 <= reg_num && reg_num <= 11)) { // NOLINT
+    release(&target->lock);
+    return -3;
+  }
+
+  const uint64 value = proc_register_s_value_at(target, reg_num);
+
+  release(&target->lock);
+
+  const int user_dst = 1;
+  if (either_copyout(user_dst, ret_addr, (char*)(&value), sizeof(value)) < 0) {
+    return -4;
+  }
+
+  return 0;
 }
