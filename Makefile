@@ -17,6 +17,9 @@ OBJS = \
   $K/process/proc.o \
   $K/process/swtch.o \
   $K/process/exec.o \
+	$K/process/Queue.o\
+	$K/process/ProcessFactory.o\
+	$K/process/CPU.o\
   $K/trap.o \
   $K/syscall/syscall.o \
   $K/syscall/sysproc.o \
@@ -30,8 +33,10 @@ OBJS = \
   $K/sync/sleeplock.o \
   $K/alloc/kalloc.o \
 	$K/lib/list.o\
+	$K/lib/Sequence.o\
 	$K/alloc/buddy.o\
-	$K/alloc/bits.o
+	$K/alloc/bits.o\
+	$K/alloc/alloc.o\
 
 # riscv64-unknown-elf- or riscv64-linux-gnu-
 # perhaps in /opt/riscv/bin

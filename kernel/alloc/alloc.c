@@ -1,9 +1,10 @@
 #include "kernel/alloc/buddy.h"
+#include "kernel/alloc/alloc.h"
 
-void* memory_allocate(uint64 nbytes) {
+void* Memory$Allocate(uint64 nbytes) {
   return buddy_malloc(nbytes);
 }
 
-void memory_deallocate(void* addr) {
+void Memory$Deallocate(void* addr) {
   buddy_free(addr);
 }

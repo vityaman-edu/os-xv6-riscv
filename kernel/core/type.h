@@ -14,7 +14,7 @@ typedef uint8 byte;
 
 typedef int bool;
 #define true 1
-#define false 2
+#define false 0
 
 #define nullptr 0
 

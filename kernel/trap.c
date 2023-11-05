@@ -16,10 +16,14 @@ void kernelvec();
 
 extern int devintr();
 
-void trapinit(void) { initlock(&tickslock, "time"); }
+void trapinit(void) {
+  initlock(&tickslock, "time");
+}
 
 // set up to take exceptions and traps while in the kernel.
-void trapinithart(void) { w_stvec((uint64)kernelvec); }
+void trapinithart(void) {
+  w_stvec((uint64)kernelvec);
+}
 
 //
 // handle an interrupt, exception, or system call from user space.
@@ -43,8 +47,10 @@ void usertrap(void) {
   if (r_scause() == 8) {
     // system call
 
-    if (killed(p))
+    if (killed(p)) {
+      // printf("[WARN] trap: killed(p)");
       exit(-1);
+    }
 
     // sepc points to the ecall instruction,
     // but we want to return to the next instruction.
@@ -63,8 +69,10 @@ void usertrap(void) {
     setkilled(p);
   }
 
-  if (killed(p))
+  if (killed(p)) {
+    // printf("[WARN] trap: killed(p)");
     exit(-1);
+  }
 
   // give up the CPU if this is a timer interrupt.
   if (which_dev == 2)

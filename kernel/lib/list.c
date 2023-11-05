@@ -8,7 +8,9 @@ void lst_init(struct list* lst) {
   lst->prev = lst;
 }
 
-int lst_empty(struct list* lst) { return lst->next == lst; }
+int lst_empty(struct list* lst) {
+  return lst->next == lst;
+}
 
 void lst_remove(struct list* node) {
   node->prev->next = node->next;
@@ -33,7 +35,7 @@ void lst_push(struct list* lst, void* p) {
 }
 
 void lst_print(struct list* lst) {
-  for (struct list* node = lst->next; node != lst; node = node->next) {
+  LST_FOR_EACH(node, lst) {
     printf(" %p", node);
   }
   printf("\n");

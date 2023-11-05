@@ -3,8 +3,8 @@
 
 #include "kernel/core/type.h"
 
-void* memory_allocate(uint64 nbytes);
+void* Memory$Allocate(uint64 nbytes);
 
-void memory_deallocate(void* addr);
+void Memory$Deallocate(void* addr);
 
 #endif // XV6_KERNEL_ALLOC_H

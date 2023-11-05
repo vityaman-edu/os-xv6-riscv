@@ -2,21 +2,17 @@
 #include "kernel/core/param.h"
 #include "kernel/hardware/memlayout.h"
 #include "kernel/hardware/riscv.h"
+#include "kernel/lib/list.h"
+#include "kernel/process/Process.h"
+#include "kernel/process/ProcessFactory.h"
+#include "kernel/process/CPU.h"
+#include "kernel/process/Queue.h"
 #include "kernel/sync/spinlock.h"
-#include "kernel/process/proc.h"
 #include "kernel/defs.h"
-
-struct cpu cpus[NCPU];
-
-struct proc proc[NPROC];
 
 struct proc* initproc;
 
-int nextpid = 1;
-struct spinlock pid_lock;
-
 extern void forkret(void);
-static void proc_reset(struct proc* p);
 
 extern char trampoline[]; // trampoline.S
 
@@ -26,145 +22,32 @@ extern char trampoline[]; // trampoline.S
 // must be acquired before any p->lock.
 struct spinlock wait_lock;
 
-// Allocate a page for each process's kernel stack.
-// Map it high in memory, followed by an invalid
-// guard page.
-void proc_mapstacks(pagetable_t kpgtbl) {
-  struct proc* p;
-
-  for (p = proc; p < &proc[NPROC]; p++) {
-    char* pa = kalloc();
-    if (pa == 0)
-      panic("kalloc");
-    uint64 va = KSTACK((int)(p - proc));
-    kvmmap(kpgtbl, va, (uint64)pa, PGSIZE, PTE_R | PTE_W);
-  }
-}
-
 // initialize the proc table.
 void procinit(void) {
-  struct proc* p;
-
-  initlock(&pid_lock, "nextpid");
   initlock(&wait_lock, "wait_lock");
-  for (p = proc; p < &proc[NPROC]; p++) {
-    initlock(&p->lock, "proc");
-    p->state = UNUSED;
-    p->kstack = KSTACK((int)(p - proc));
-  }
+  ProcessFactory$Initialize();
 }
 
 // Must be called with interrupts disabled,
 // to prevent race with process being moved
 // to a different CPU.
 int cpuid() {
-  int id = r_tp();
-  return id;
+  return CPU$Id();
 }
 
 // Return this CPU's cpu struct.
 // Interrupts must be disabled.
 struct cpu* mycpu(void) {
-  int id = cpuid();
-  struct cpu* c = &cpus[id];
-  return c;
+  return CPU$Current();
 }
 
 // Return the current struct proc *, or zero if none.
 struct proc* myproc(void) {
   push_off();
-  struct cpu* c = mycpu();
-  struct proc* p = c->proc;
+  CPU* cpu = CPU$Current();
+  Process* proc = cpu->proc;
   pop_off();
-  return p;
-}
-
-int allocpid() {
-  int pid;
-
-  acquire(&pid_lock);
-  pid = nextpid;
-  nextpid = nextpid + 1;
-  release(&pid_lock);
-
-  return pid;
-}
-
-static struct proc* proc_find_unused() {
-  for (struct proc* p = proc; p < &proc[NPROC]; p++) {
-    acquire(&p->lock);
-    if (p->state == UNUSED) {
-      return p;
-    }
-    release(&p->lock);
-  }
-  return nullptr;
-}
-
-static bool proc_prepare(struct proc* proc) {
-  proc->pid = allocpid();
-  proc->state = USED;
-
-  // Allocate a trapframe page.
-  proc->trapframe = kalloc();
-  if (proc->trapframe == nullptr) {
-    return false;
-  }
-
-  // An empty user page table.
-  proc->pagetable = proc_pagetable(proc);
-  if (proc->pagetable == 0) {
-    return false;
-  }
-
-  // Set up new context to start executing at forkret,
-  // which returns to user space.
-  memset(&proc->context, 0, sizeof(proc->context));
-  proc->context.ra = (uint64)forkret;
-  proc->context.sp = proc->kstack + PGSIZE;
-
-  return true;
-}
-
-// Look in the process table for an UNUSED proc.
-// If found, initialize state required to run in the kernel,
-// and return with p->lock held.
-// If there are no free procs, or a memory allocation fails, return 0.
-static struct proc* allocproc(void) {
-  struct proc* p = proc_find_unused();
-  if (p == nullptr) {
-    return nullptr;
-  }
-
-  if (!proc_prepare(p)) {
-    proc_reset(p);
-    release(&p->lock);
-    return nullptr;
-  }
-
-  return p;
-}
-
-// free a proc structure and the data hanging from it,
-// including user pages.
-// p->lock must be held.
-static void proc_reset(struct proc* proc) {
-  if (proc->trapframe) {
-    kfree((void*)proc->trapframe);
-  }
-  proc->trapframe = 0;
-  if (proc->pagetable) {
-    proc_freepagetable(proc->pagetable, proc->sz);
-  }
-  proc->pagetable = 0;
-  proc->sz = 0;
-  proc->pid = 0;
-  proc->parent = 0;
-  proc->name[0] = 0;
-  proc->chan = 0;
-  proc->killed = 0;
-  proc->xstate = 0;
-  proc->state = UNUSED;
+  return proc;
 }
 
 // Create a user page table for a given process, with no user memory,
@@ -221,9 +104,7 @@ uchar initcode[]
 
 // Set up first user process.
 void userinit(void) {
-  struct proc* p;
-
-  p = allocproc();
+  struct proc* p = ProcessFactory$Create();
   initproc = p;
 
   // allocate one user page and copy initcode's instructions
@@ -269,14 +150,14 @@ int fork(void) {
   struct proc* p = myproc();
 
   // Allocate process.
-  if ((np = allocproc()) == 0) {
+  if ((np = ProcessFactory$Create()) == 0) {
     return -1;
   }
 
   // Copy user memory from parent to child.
   if (uvmcopy(p->pagetable, np->pagetable, p->sz) < 0) {
-    proc_reset(np);
-    release(&np->lock);
+    // printf("[WARN] fork failed\n");
+    ProcessFactory$Dispose(np);
     return -1;
   }
   np->sz = p->sz;
@@ -288,9 +169,11 @@ int fork(void) {
   np->trapframe->a0 = 0;
 
   // increment reference counts on open file descriptors.
-  for (i = 0; i < NOFILE; i++)
-    if (p->ofile[i])
+  for (i = 0; i < NOFILE; i++) {
+    if (p->ofile[i]) {
       np->ofile[i] = filedup(p->ofile[i]);
+    }
+  }
   np->cwd = idup(p->cwd);
 
   safestrcpy(np->name, p->name, sizeof(p->name));
@@ -313,9 +196,8 @@ int fork(void) {
 // Pass p's abandoned children to init.
 // Caller must hold wait_lock.
 void reparent(struct proc* p) {
-  struct proc* pp;
-
-  for (pp = proc; pp < &proc[NPROC]; pp++) {
+  ProcessQueue$ForEach(&ProcessFactory$Graveyard) {
+    Process* pp = ProcessQueue$Iterator$Process(it);
     if (pp->parent == p) {
       pp->parent = initproc;
       wakeup(initproc);
@@ -327,10 +209,13 @@ void reparent(struct proc* p) {
 // An exited process remains in the zombie state
 // until its parent calls wait().
 void exit(int status) {
+  // printf("[INFO] proc exit(%d)\n", status);
+
   struct proc* p = myproc();
 
-  if (p == initproc)
+  if (p == initproc) {
     panic("init exiting");
+  }
 
   // Close all open files.
   for (int fd = 0; fd < NOFILE; fd++) {
@@ -369,7 +254,8 @@ void exit(int status) {
 // Wait for a child process to exit and return its pid.
 // Return -1 if this process has no children.
 int wait(uint64 addr) {
-  struct proc* pp;
+  // // printf("[INFO] wait called\n");
+
   int havekids, pid;
   struct proc* p = myproc();
 
@@ -378,7 +264,9 @@ int wait(uint64 addr) {
   for (;;) {
     // Scan through table looking for exited children.
     havekids = 0;
-    for (pp = proc; pp < &proc[NPROC]; pp++) {
+    ProcessQueue$ForEach(&ProcessFactory$Graveyard) {
+      Process* pp = ProcessQueue$Iterator$Process(it);
+
       if (pp->parent == p) {
         // make sure the child isn't still in exit() or swtch().
         acquire(&pp->lock);
@@ -391,12 +279,14 @@ int wait(uint64 addr) {
               && copyout(
                      p->pagetable, addr, (char*)&pp->xstate, sizeof(pp->xstate)
                  ) < 0) {
+            // printf("[INFO] copyout failed\n");
             release(&pp->lock);
             release(&wait_lock);
             return -1;
           }
-          proc_reset(pp);
-          release(&pp->lock);
+
+          // printf("[INFO] found zombie kid\n");
+          ProcessFactory$Dispose(pp);
           release(&wait_lock);
           return pid;
         }
@@ -424,7 +314,6 @@ int wait(uint64 addr) {
 //  - eventually that process transfers control
 //    via swtch back to the scheduler.
 void scheduler(void) {
-  struct proc* p;
   struct cpu* c = mycpu();
 
   c->proc = 0;
@@ -432,7 +321,9 @@ void scheduler(void) {
     // Avoid deadlock by ensuring that devices can interrupt.
     intr_on();
 
-    for (p = proc; p < &proc[NPROC]; p++) {
+    ProcessQueue$ForEach(&ProcessFactory$Graveyard) {
+      Process* p = ProcessQueue$Iterator$Process(it);
+
       acquire(&p->lock);
       if (p->state == RUNNABLE) {
         // Switch to chosen process.  It is the process's job
@@ -540,9 +431,10 @@ void sleep(void* chan, struct spinlock* lk) {
 // Wake up all processes sleeping on chan.
 // Must be called without any p->lock.
 void wakeup(void* chan) {
-  struct proc* p;
 
-  for (p = proc; p < &proc[NPROC]; p++) {
+  ProcessQueue$ForEach(&ProcessFactory$Graveyard) {
+    Process* p = ProcessQueue$Iterator$Process(it);
+
     if (p != myproc()) {
       acquire(&p->lock);
       if (p->state == SLEEPING && p->chan == chan) {
@@ -557,9 +449,11 @@ void wakeup(void* chan) {
 // The victim won't exit until it tries to return
 // to user space (see usertrap() in trap.c).
 int kill(int pid) {
-  struct proc* p;
+  // printf("[WARN] proc kill(%d)\n", pid);
 
-  for (p = proc; p < &proc[NPROC]; p++) {
+  ProcessQueue$ForEach(&ProcessFactory$Graveyard) {
+    Process* p = ProcessQueue$Iterator$Process(it);
+
     acquire(&p->lock);
     if (p->pid == pid) {
       p->killed = 1;
@@ -628,11 +522,12 @@ void procdump(void) {
       [RUNNING] = "run   ",
       [ZOMBIE] = "zombie",
   };
-  struct proc* p;
   char* state;
 
   printf("\n");
-  for (p = proc; p < &proc[NPROC]; p++) {
+  ProcessQueue$ForEach(&ProcessFactory$Graveyard) {
+    Process* p = ProcessQueue$Iterator$Process(it);
+
     if (p->state == UNUSED)
       continue;
     if (p->state >= 0 && p->state < NELEM(states) && states[p->state])
@@ -692,12 +587,14 @@ int dump() {
 /// call `release` after usage.
 /// returns `NULL` when not found.
 static struct proc* proc_acquire_by_id(int pid) {
-  for (struct proc* proccess = proc; proccess < &proc[NPROC]; ++proccess) {
-    acquire(&proccess->lock);
-    if (proccess->pid == pid && !proccess->killed) {
-      return proccess;
+  ProcessQueue$ForEach(&ProcessFactory$Graveyard) {
+    Process* process = ProcessQueue$Iterator$Process(it);
+
+    acquire(&process->lock);
+    if (process->pid == pid && !process->killed) {
+      return process;
     }
-    release(&proccess->lock);
+    release(&process->lock);
   }
   return 0;
 }

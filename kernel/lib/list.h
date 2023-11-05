@@ -22,4 +22,8 @@ void lst_push(struct list* lst, void* p);
 
 void lst_print(struct list* lst);
 
+#define LST_FOR_EACH(node, lst)                                                \
+  for (struct list * (node) = (lst)->next; (node) != (lst);                    \
+       (node) = (node)->next)
+
 #endif // XV6_KERNEL_LIST_H
