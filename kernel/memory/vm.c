@@ -5,11 +5,7 @@
 #include "kernel/hardware/riscv.h"
 #include "kernel/defs.h"
 #include "kernel/file/fs.h"
-
-/*
- * the kernel's page table.
- */
-pagetable_t kernel_pagetable;
+#include "kernel/memory/vm.h"
 
 extern char etext[]; // kernel.ld sets this to end of kernel code.
 

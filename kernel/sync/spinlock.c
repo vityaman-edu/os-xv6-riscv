@@ -18,6 +18,7 @@ void initlock(struct spinlock* lk, char* name) {
 void acquire(struct spinlock* lk) {
   push_off(); // disable interrupts to avoid deadlock.
   if (holding(lk)) {
+    printf("[error] kernel/sync/spinlock: acquire '%s' failed", lk->name);
     panic("acquire");
   }
 
@@ -25,8 +26,16 @@ void acquire(struct spinlock* lk) {
   //   a5 = 1
   //   s1 = &lk->locked
   //   amoswap.w.aq a5, a5, (s1)
+  const int max_tries = 15000000;
+  int tries = 0;
   while (__sync_lock_test_and_set(&lk->locked, 1) != 0) {
-    // Do nothing
+    tries += 1;
+    if (max_tries < tries) {
+      printf(
+          "[warn] kernel/sync/spinlock: possible deadlock of '%s'\n", lk->name
+      );
+      tries = 0;
+    }
   }
 
   // Tell the C compiler and the processor to not move loads or stores
@@ -42,6 +51,7 @@ void acquire(struct spinlock* lk) {
 // Release the lock.
 void release(struct spinlock* lock) {
   if (!holding(lock)) {
+    printf("[warn] kernel/sync/spinlock: release '%s' failed\n", lock->name);
     panic("release");
   }
 
