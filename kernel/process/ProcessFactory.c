@@ -16,6 +16,7 @@ extern pagetable_t kernel_pagetable;
 /// allocated process
 static Sequence Process$Index;
 
+/// Process Limit
 static const Sequence$Number Process$Index$Max = 100;
 
 /// Next Process ID (pid) sequence.
