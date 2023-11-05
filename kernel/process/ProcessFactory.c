@@ -71,11 +71,11 @@ static void ProcessFactory$Reset(Process* process) {
   process->trapframe = nullptr;
 
   if (process->pagetable) {
-    proc_freepagetable(process->pagetable, process->sz);
+    proc_freepagetable(process->pagetable, process->memory_size);
   }
   process->pagetable = nullptr;
 
-  process->sz = 0;
+  process->memory_size = 0;
   process->pid = 0;
   process->parent = nullptr;
   process->name[0] = 0;
@@ -94,7 +94,7 @@ static void ProcessFactory$New(Process* process) {
     process->pid = 0;
     process->parent = nullptr;
     process->kstack = nullptr;
-    process->sz = 0;
+    process->memory_size = 0;
     process->pagetable = nullptr;
     process->trapframe = nullptr;
     for (int i = 0; i < NOFILE; ++i) {

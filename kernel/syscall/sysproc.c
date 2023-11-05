@@ -28,7 +28,7 @@ uint64 sys_sbrk(void) {
   int n;
 
   argint(0, &n);
-  addr = myproc()->sz;
+  addr = myproc()->memory_size;
   if (growproc(n) < 0)
     return -1;
   return addr;

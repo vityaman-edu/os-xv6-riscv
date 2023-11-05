@@ -11,9 +11,9 @@
 // Fetch the uint64 at addr from the current process.
 int fetchaddr(uint64 addr, uint64* ip) {
   struct proc* p = myproc();
-  if (addr >= p->sz
+  if (addr >= p->memory_size
       || addr + sizeof(uint64)
-             > p->sz) // both tests needed, in case of overflow
+             > p->memory_size) // both tests needed, in case of overflow
     return -1;
   if (copyin(p->pagetable, (char*)ip, addr, sizeof(*ip)) != 0)
     return -1;

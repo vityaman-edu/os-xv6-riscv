@@ -18,6 +18,7 @@ OBJS = \
   $K/process/swtch.o \
   $K/process/exec.o \
 	$K/process/Queue.o\
+	$K/process/Process.o\
 	$K/process/ProcessFactory.o\
 	$K/process/CPU.o\
   $K/trap.o \
@@ -31,6 +32,7 @@ OBJS = \
   $K/file/pipe.o \
   $K/sync/spinlock.o \
   $K/sync/sleeplock.o \
+	$K/sync/Interrupt.o \
   $K/alloc/kalloc.o \
 	$K/lib/list.o\
 	$K/lib/Sequence.o\
