@@ -4,26 +4,27 @@
 #include "kernel/process/Process.h"
 #include "kernel/process/Queue.h"
 
-/// Reuses abandoned processes
-extern ProcessQueue ProcessFactory$Graveyard;
+/// All system processes are stored here.
+extern ProcessQueue ProcessFactory$Graveyard; // NOLINT: thread-safe
 
+/// User should initialize this module before usage.
 void ProcessFactory$Initialize();
 
-/// free a proc structure and the data hanging from it,
-/// including user pages. p->lock must be held.
-void ProcessFactory$Reset(Process* process);
-
-void ProcessFactory$New(Process* process);
-
-bool ProcessFactory$Prepare(Process* process);
-
-/// Look in the process table for an UNUSED proc.
+/// Look in the `Graveyard` for an `UNUSED` proceses.
+/// Or allocate memory using `Memory$Allocator`.
 /// If found, initialize state required to run in
-/// the kernel, and return with p->lock held.
-/// If there are no free procs, or a memory
-/// allocation fails, return 0.
+/// the kernel.
+///
+/// @return `Process` with `process->lock` held
+/// @return `nullptr` if can't create more processes
 Process* ProcessFactory$Create();
 
+/// Return process back to `ProcessFactory`.
+/// Caller must hold `process->lock`.
+/// Any usage of the given `process` after
+/// disposing.
+///
+/// @param `process` to dispose
 void ProcessFactory$Dispose(Process* process);
 
 #endif // XV6_KERNEL_PROCESS_FACTORY_H

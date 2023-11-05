@@ -10,34 +10,61 @@
 #include "kernel/sync/spinlock.h"
 
 /// Kernel pagetable
-extern pagetable_t kernel_pagetable;
+extern pagetable_t kernel_pagetable; // NOLINT: no other way
 
-/// Used to map kernel stack to newly 
+/// Used to map kernel stack to newly
 /// allocated process
-static Sequence Process$Index;
+static Sequence Process$Index; // NOLINT: thread-safe
 
 /// Process Limit
 static const Sequence$Number Process$Index$Max = 100;
 
 /// Next Process ID (pid) sequence.
-static Sequence Process$Id;
+static Sequence Process$Id; // NOLINT: thread-safe
 
 /// All processes are here.
-ProcessQueue ProcessFactory$Graveyard;
+ProcessQueue ProcessFactory$Graveyard; // NOLINT: thread-safe
 
 extern void forkret(void);
 
-void ProcessFactory$Initialize() {
-  // printf("[INFO] ProcessFactory$Initialize\n");
+/// Private functions
+static void ProcessFactory$Reset(Process* process);
+static void ProcessFactory$New(Process* process);
+static bool ProcessFactory$Prepare(Process* process);
+static Process* ProcessFactory$FindUnused();
+static Process* ProcessFactory$Allocate();
 
+void ProcessFactory$Initialize() {
   Sequence$New(&Process$Index);
   Sequence$New(&Process$Id);
   ProcessQueue$New(&ProcessFactory$Graveyard);
 }
 
-void ProcessFactory$Reset(Process* process) {
-  // printf("[INFO] ProcessFactory$Reset\n");
+Process* ProcessFactory$Create() {
+  Process* process = ProcessFactory$FindUnused();
+  if (process == nullptr) {
+    process = ProcessFactory$Allocate();
+  }
+  if (process == nullptr) {
+    return nullptr;
+  }
 
+  if (!ProcessFactory$Prepare(process)) {
+    ProcessFactory$Dispose(process);
+    return nullptr;
+  }
+
+  return process;
+}
+
+void ProcessFactory$Dispose(Process* process) {
+  ProcessFactory$Reset(process);
+  release(&process->lock);
+}
+
+/// free a proc structure and the data hanging from it,
+/// including user pages. p->lock must be held.
+static void ProcessFactory$Reset(Process* process) {
   if (process->trapframe) {
     kfree((void*)process->trapframe);
   }
@@ -58,17 +85,14 @@ void ProcessFactory$Reset(Process* process) {
   process->state = UNUSED;
 }
 
-void ProcessFactory$New(Process* process) {
-  // printf("[INFO] ProcessFactory$New\n");
-
-  {
+static void ProcessFactory$New(Process* process) {
+  { // Reset all fields to zero
     process->state = UNUSED;
     process->chan = nullptr;
     process->killed = false;
     process->xstate = 0;
     process->pid = 0;
     process->parent = nullptr;
-
     process->kstack = nullptr;
     process->sz = 0;
     process->pagetable = nullptr;
@@ -80,9 +104,11 @@ void ProcessFactory$New(Process* process) {
     process->name[0] = '\0';
   }
 
-  { initlock(&process->lock, "Process$Lock"); }
+  { // Prepare process lock for usage
+    initlock(&process->lock, "Process$Lock");
+  }
 
-  {
+  { // Map Kernel stack
     Sequence$Number index = Sequence$Next(&Process$Index);
     process->kstack = KSTACK((int)(index));
     char* phys = kalloc();
@@ -92,13 +118,9 @@ void ProcessFactory$New(Process* process) {
     uint64 virt = process->kstack;
     kvmmap(kernel_pagetable, virt, (uint64)phys, PGSIZE, PTE_R | PTE_W);
   }
-
-  // { ProcessFactory$Reset(process); }
 }
 
-bool ProcessFactory$Prepare(Process* process) {
-  // printf("[INFO] ProcessFactory$Prepare\n");
-
+static bool ProcessFactory$Prepare(Process* process) {
   process->pid = Sequence$Next(&Process$Id);
   process->state = USED;
 
@@ -124,8 +146,6 @@ bool ProcessFactory$Prepare(Process* process) {
 }
 
 static Process* ProcessFactory$FindUnused() {
-  // printf("[INFO] ProcessFactory$FindUnused\n");
-
   ProcessQueue$ForEach(&ProcessFactory$Graveyard) {
     Process* process = ProcessQueue$Iterator$Process(it);
     acquire(&process->lock);
@@ -138,8 +158,6 @@ static Process* ProcessFactory$FindUnused() {
 }
 
 static Process* ProcessFactory$Allocate() {
-  // printf("[INFO] ProcessFactory$Allocate\n");
-
   if (Sequence$Last(&Process$Index) > Process$Index$Max) {
     return nullptr;
   }
@@ -157,32 +175,4 @@ static Process* ProcessFactory$Allocate() {
   ProcessQueue$Push(&ProcessFactory$Graveyard, node);
 
   return process;
-}
-
-Process* ProcessFactory$Create() {
-  // printf("[INFO] ProcessFactory$Create\n");
-
-  Process* process = ProcessFactory$FindUnused();
-  if (process == nullptr) {
-    // printf("[INFO] ProcessFactory$FindUnused FAILED\n");
-    process = ProcessFactory$Allocate();
-  }
-  if (process == nullptr) {
-    // printf("[INFO] ProcessFactory$Create FAILED\n");
-    return nullptr;
-  }
-
-  if (!ProcessFactory$Prepare(process)) {
-    ProcessFactory$Dispose(process);
-    return nullptr;
-  }
-
-  return process;
-}
-
-void ProcessFactory$Dispose(Process* process) {
-  // printf("[INFO] ProcessFactory$Dispose\n");
-
-  ProcessFactory$Reset(process);
-  release(&process->lock);
 }
