@@ -16,7 +16,7 @@ int nextpid = 1;
 struct spinlock pid_lock;
 
 extern void forkret(void);
-static void freeproc(struct proc* p);
+static void proc_reset(struct proc* p);
 
 extern char trampoline[]; // trampoline.S
 
@@ -90,47 +90,57 @@ int allocpid() {
   return pid;
 }
 
+static struct proc* proc_find_unused() {
+  for (struct proc* p = proc; p < &proc[NPROC]; p++) {
+    acquire(&p->lock);
+    if (p->state == UNUSED) {
+      return p;
+    }
+    release(&p->lock);
+  }
+  return nullptr;
+}
+
+static bool proc_prepare(struct proc* proc) {
+  proc->pid = allocpid();
+  proc->state = USED;
+
+  // Allocate a trapframe page.
+  proc->trapframe = kalloc();
+  if (proc->trapframe == nullptr) {
+    return false;
+  }
+
+  // An empty user page table.
+  proc->pagetable = proc_pagetable(proc);
+  if (proc->pagetable == 0) {
+    return false;
+  }
+
+  // Set up new context to start executing at forkret,
+  // which returns to user space.
+  memset(&proc->context, 0, sizeof(proc->context));
+  proc->context.ra = (uint64)forkret;
+  proc->context.sp = proc->kstack + PGSIZE;
+
+  return true;
+}
+
 // Look in the process table for an UNUSED proc.
 // If found, initialize state required to run in the kernel,
 // and return with p->lock held.
 // If there are no free procs, or a memory allocation fails, return 0.
 static struct proc* allocproc(void) {
-  struct proc* p;
-
-  for (p = proc; p < &proc[NPROC]; p++) {
-    acquire(&p->lock);
-    if (p->state == UNUSED) {
-      goto found;
-    } else {
-      release(&p->lock);
-    }
+  struct proc* p = proc_find_unused();
+  if (p == nullptr) {
+    return nullptr;
   }
-  return 0;
 
-found:
-  p->pid = allocpid();
-  p->state = USED;
-
-  // Allocate a trapframe page.
-  if ((p->trapframe = (struct trapframe*)kalloc()) == 0) {
-    freeproc(p);
+  if (!proc_prepare(p)) {
+    proc_reset(p);
     release(&p->lock);
-    return 0;
+    return nullptr;
   }
-
-  // An empty user page table.
-  p->pagetable = proc_pagetable(p);
-  if (p->pagetable == 0) {
-    freeproc(p);
-    release(&p->lock);
-    return 0;
-  }
-
-  // Set up new context to start executing at forkret,
-  // which returns to user space.
-  memset(&p->context, 0, sizeof(p->context));
-  p->context.ra = (uint64)forkret;
-  p->context.sp = p->kstack + PGSIZE;
 
   return p;
 }
@@ -138,21 +148,23 @@ found:
 // free a proc structure and the data hanging from it,
 // including user pages.
 // p->lock must be held.
-static void freeproc(struct proc* p) {
-  if (p->trapframe)
-    kfree((void*)p->trapframe);
-  p->trapframe = 0;
-  if (p->pagetable)
-    proc_freepagetable(p->pagetable, p->sz);
-  p->pagetable = 0;
-  p->sz = 0;
-  p->pid = 0;
-  p->parent = 0;
-  p->name[0] = 0;
-  p->chan = 0;
-  p->killed = 0;
-  p->xstate = 0;
-  p->state = UNUSED;
+static void proc_reset(struct proc* proc) {
+  if (proc->trapframe) {
+    kfree((void*)proc->trapframe);
+  }
+  proc->trapframe = 0;
+  if (proc->pagetable) {
+    proc_freepagetable(proc->pagetable, proc->sz);
+  }
+  proc->pagetable = 0;
+  proc->sz = 0;
+  proc->pid = 0;
+  proc->parent = 0;
+  proc->name[0] = 0;
+  proc->chan = 0;
+  proc->killed = 0;
+  proc->xstate = 0;
+  proc->state = UNUSED;
 }
 
 // Create a user page table for a given process, with no user memory,
@@ -263,7 +275,7 @@ int fork(void) {
 
   // Copy user memory from parent to child.
   if (uvmcopy(p->pagetable, np->pagetable, p->sz) < 0) {
-    freeproc(np);
+    proc_reset(np);
     release(&np->lock);
     return -1;
   }
@@ -383,12 +395,12 @@ int wait(uint64 addr) {
             release(&wait_lock);
             return -1;
           }
-          freeproc(pp);
+          proc_reset(pp);
           release(&pp->lock);
           release(&wait_lock);
           return pid;
         }
-        
+
         release(&pp->lock);
       }
     }
