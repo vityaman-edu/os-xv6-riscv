@@ -7,12 +7,24 @@ Diagnostics:
   ClangTidy:
     Add: "*"
     Remove: [
-      "android-cloexec-pipe",
-      "concurrency-mt-unsafe",
-      "bugprone-easily-swappable-parameters",
-      "altera-struct-pack-align",
-      "altera-id-dependent-backward-branch",
-      "altera-unroll-loops"
+      android-cloexec-pipe,
+      concurrency-mt-unsafe,
+      bugprone-easily-swappable-parameters,
+      altera-struct-pack-align,
+      altera-id-dependent-backward-branch,
+      altera-unroll-loops,
+      misc-no-recursion,
+
+      hicpp-signed-bitwise,
+      bugprone-assignment-in-if-condition,
+      performance-no-int-to-ptr,
+      bugprone-narrowing-conversions,
+      cppcoreguidelines-narrowing-conversions,
+      bugprone-implicit-widening-of-multiplication-result,
+      cppcoreguidelines-avoid-magic-numbers,
+      readability-magic-numbers,
+      cppcoreguidelines-avoid-non-const-global-variables,
+      
     ]
 
 InlayHints:
