@@ -51,12 +51,12 @@ static void printptr(uint64 x) {
   int i;
   consputc('0');
   consputc('x');
-  for (i = 0; i < (sizeof(uint64) * 2); i++, x <<= 4)
+  for (i = 0; i < (int)(sizeof(uint64) * 2); i++, x <<= 4)
     consputc(digits[x >> (sizeof(uint64) * 8 - 4)]);
 }
 
 // Print to the console. only understands %d, %x, %p, %s.
-void printf(char* fmt, ...) {
+void printf(const char* fmt, ...) {
   va_list ap;
   int i, c, locking;
   char* s;
@@ -109,7 +109,7 @@ void printf(char* fmt, ...) {
     release(&pr.lock);
 }
 
-void panic(char* s) {
+void panic(const char* s) {
   pr.locking = 0;
   printf("panic: ");
   printf(s);

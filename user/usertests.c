@@ -30,6 +30,8 @@ char buf[BUFSZ];
 // what if you pass ridiculous pointers to system calls
 // that read user memory with copyin?
 void copyin(char* s) {
+  (void)s;
+  
   uint64 addrs[] = {0x80000000LL, 0xffffffffffffffff};
 
   for (int ai = 0; ai < 2; ai++) {
@@ -72,6 +74,8 @@ void copyin(char* s) {
 // what if you pass ridiculous pointers to system calls
 // that write user memory with copyout?
 void copyout(char* s) {
+  (void)s;
+
   uint64 addrs[] = {0x80000000LL, 0xffffffffffffffff};
 
   for (int ai = 0; ai < 2; ai++) {
@@ -111,6 +115,8 @@ void copyout(char* s) {
 
 // what if you pass ridiculous string pointers to system calls?
 void copyinstr1(char* s) {
+  (void)s;
+
   uint64 addrs[] = {0x80000000LL, 0xffffffffffffffff};
 
   for (int ai = 0; ai < 2; ai++) {
@@ -128,6 +134,8 @@ void copyinstr1(char* s) {
 // of the kernel buffer it is copied into, so that the null
 // would fall just beyond the end of the kernel buffer?
 void copyinstr2(char* s) {
+  (void)s;
+
   char b[MAXPATH + 1];
 
   for (int i = 0; i < MAXPATH; i++)
@@ -188,6 +196,8 @@ void copyinstr2(char* s) {
 
 // what if a string argument crosses over the end of last user page?
 void copyinstr3(char* s) {
+  (void)s;
+
   sbrk(8192);
   uint64 top = (uint64)sbrk(0);
   if ((top % PGSIZE) != 0) {
@@ -555,7 +565,7 @@ void writebig(char* s) {
     exit(1);
   }
 
-  for (i = 0; i < MAXFILE; i++) {
+  for (i = 0; i < (int)MAXFILE; i++) {
     ((int*)buf)[0] = i;
     if (write(fd, buf, BSIZE) != BSIZE) {
       printf("%s: error: write big file failed\n", s, i);
@@ -599,6 +609,8 @@ void writebig(char* s) {
 
 // many creates, followed by unlink test
 void createtest(char* s) {
+  (void)s;
+
   int i, fd;
   enum { N = 52 };
 
@@ -729,7 +741,7 @@ void pipe1(char* s) {
       }
       total += n;
       cc = cc * 2;
-      if (cc > sizeof(buf))
+      if (cc > (int)sizeof(buf))
         cc = sizeof(buf);
     }
     if (total != N * SZ) {
@@ -975,6 +987,8 @@ void forkforkfork(char* s) {
 // release" due to exit() releasing a different p->parent->lock than
 // it acquired.
 void reparent2(char* s) {
+  (void)s;
+
   for (int i = 0; i < 800; i++) {
     int pid1 = fork();
     if (pid1 < 0) {
@@ -1067,7 +1081,7 @@ void sharedfd(char* s) {
   }
   nc = np = 0;
   while ((n = read(fd, buf, sizeof(buf))) > 0) {
-    for (i = 0; i < sizeof(buf); i++) {
+    for (i = 0; i < (int)sizeof(buf); i++) {
       if (buf[i] == 'c')
         nc++;
       if (buf[i] == 'p')
@@ -1323,7 +1337,8 @@ void linktest(char* s) {
 void concreate(char* s) {
   enum { N = 40 };
   char file[3];
-  int i, pid, n, fd;
+  int i;
+  int pid, n, fd;
   char fa[N];
   struct {
     ushort inum;
@@ -1366,7 +1381,7 @@ void concreate(char* s) {
       continue;
     if (de.name[0] == 'C' && de.name[2] == '\0') {
       i = de.name[1] - '0';
-      if (i < 0 || i >= sizeof(fa)) {
+      if (i < 0 || i >= (int)sizeof(fa)) {
         printf("%s: concreate weird file %s\n", s, de.name);
         exit(1);
       }
@@ -2075,7 +2090,8 @@ void MAXVAplus(char* s) {
 // failed allocation?
 void sbrkfail(char* s) {
   enum { BIG = 100 * 1024 * 1024 };
-  int i, xstatus;
+  uint64 i;
+  int xstatus;
   int fds[2];
   char scratch;
   char *c, *a;
@@ -2182,7 +2198,7 @@ void validatetest(char* s) {
 // does uninitialized data start out zero?
 char uninit[10000];
 void bsstest(char* s) {
-  int i;
+  uint64 i;
 
   for (i = 0; i < sizeof(uninit); i++) {
     if (uninit[i] != '\0') {
@@ -2341,6 +2357,8 @@ void textwrite(char* s) {
 // call arguments) resulted in a kernel page faults.
 void* big = (void*)0xeaeb0b5b00002f5e;
 void pgbug(char* s) {
+  (void)s;
+
   char* argv[1];
   argv[0] = 0;
   exec(big, argv);
@@ -2353,6 +2371,8 @@ void pgbug(char* s) {
 // size to be less than a page, or zero, or reduces the break by an
 // amount too small to cause a page to be freed?
 void sbrkbugs(char* s) {
+  (void)s;
+
   int pid = fork();
   if (pid < 0) {
     printf("fork failed\n");
@@ -2409,6 +2429,8 @@ void sbrkbugs(char* s) {
 // shrunk to be somewhat less than that page boundary, can the kernel
 // still copyin() from addresses in the last page?
 void sbrklast(char* s) {
+  (void)s;
+
   uint64 top = (uint64)sbrk(0);
   if ((top % 4096) != 0)
     sbrk(4096 - (top % 4096));
@@ -2432,6 +2454,8 @@ void sbrklast(char* s) {
 // does sbrk handle signed int32 wrap-around with
 // negative arguments?
 void sbrk8000(char* s) {
+  (void)s;
+
   sbrk(0x80000004);
   volatile char* top = sbrk(0);
   *(top - 1) = *(top - 1) + 1;
@@ -2440,6 +2464,8 @@ void sbrk8000(char* s) {
 // regression test. test whether exec() leaks memory if one of the
 // arguments is invalid. the test passes if the kernel doesn't panic.
 void badarg(char* s) {
+  (void)s;
+
   for (int i = 0; i < 50000; i++) {
     char* argv[2];
     argv[0] = (char*)0xffffffff;
@@ -2619,6 +2645,8 @@ void manywrites(char* s) {
 // out of blocks. assumed_free may need to be raised to be more than
 // the number of free blocks. this test takes a long time.
 void badwrite(char* s) {
+  (void)s;
+
   int assumed_free = 600;
 
   unlink("junk");
@@ -2652,6 +2680,8 @@ void badwrite(char* s) {
 // of memory. it's really a test that such a condition
 // doesn't cause a panic.
 void execout(char* s) {
+  (void)s;
+
   for (int avail = 0; avail < 15; avail++) {
     int pid = fork();
     if (pid < 0) {
@@ -2705,7 +2735,7 @@ void diskfull(char* s) {
       done = 1;
       break;
     }
-    for (int i = 0; i < MAXFILE; i++) {
+    for (uint64 i = 0; i < MAXFILE; i++) {
       char buf[BSIZE];
       if (write(fd, buf, BSIZE) != BSIZE) {
         done = 1;
@@ -2763,6 +2793,8 @@ void diskfull(char* s) {
 }
 
 void outofinodes(char* s) {
+  (void)s;
+
   int nzz = 32 * 32;
   for (int i = 0; i < nzz; i++) {
     char name[32];

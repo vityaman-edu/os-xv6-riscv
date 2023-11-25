@@ -62,9 +62,9 @@ static uint balloc(uint dev) {
   struct buf* bp;
 
   bp = 0;
-  for (b = 0; b < sb.size; b += BPB) {
+  for (b = 0; b < (int)sb.size; b += BPB) {
     bp = bread(dev, BBLOCK(b, sb));
-    for (bi = 0; bi < BPB && b + bi < sb.size; bi++) {
+    for (bi = 0; bi < BPB && b + bi < (int)sb.size; bi++) {
       m = 1 << (bi % 8);
       if ((bp->data[bi / 8] & m) == 0) { // Is block free?
         bp->data[bi / 8] |= m;           // Mark block in use.
@@ -185,7 +185,7 @@ static struct inode* iget(uint dev, uint inum);
 // Returns an unlocked but allocated and referenced inode,
 // or NULL if there is no free inode.
 struct inode* ialloc(uint dev, short type) {
-  int inum;
+  uint64 inum;
   struct buf* bp;
   struct dinode* dip;
 
@@ -408,7 +408,7 @@ void itrunc(struct inode* ip) {
   if (ip->addrs[NDIRECT]) {
     bp = bread(ip->dev, ip->addrs[NDIRECT]);
     a = (uint*)bp->data;
-    for (j = 0; j < NINDIRECT; j++) {
+    for (j = 0; j < (int)NINDIRECT; j++) {
       if (a[j])
         bfree(ip->dev, a[j]);
     }
@@ -534,7 +534,7 @@ struct inode* dirlookup(struct inode* dp, char* name, uint* poff) {
 // Write a new directory entry (name, inum) into the directory dp.
 // Returns 0 on success, -1 on failure (e.g. out of disk blocks).
 int dirlink(struct inode* dp, char* name, uint inum) {
-  int off;
+  uint64 off;
   struct dirent de;
   struct inode* ip;
 

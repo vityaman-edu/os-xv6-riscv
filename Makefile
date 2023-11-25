@@ -30,7 +30,9 @@ OBJS = \
   $K/plic.o \
   $K/virtio_disk.o\
   $K/list.o\
-  $K/buddy.o
+  $K/buddy.o\
+	$K/cxxstd/malloc.o\
+	$K/cxxstd/test.o
 
 # riscv64-unknown-elf- or riscv64-linux-gnu-
 # perhaps in /opt/riscv/bin
@@ -53,24 +55,40 @@ endif
 QEMU = qemu-system-riscv64
 
 CC = $(TOOLPREFIX)gcc
+CXX = $(TOOLPREFIX)g++
 AS = $(TOOLPREFIX)as
 LD = $(TOOLPREFIX)ld
 OBJCOPY = $(TOOLPREFIX)objcopy
 OBJDUMP = $(TOOLPREFIX)objdump
 
-CFLAGS = -Wall -Werror -O -fno-omit-frame-pointer -ggdb -gdwarf-2
+CFLAGS = -Wall -Werror -Wextra 
+CFLAGS += -O -fno-omit-frame-pointer -ggdb -gdwarf-2
 CFLAGS += -MD
 CFLAGS += -mcmodel=medany
 CFLAGS += -ffreestanding -fno-common -nostdlib -mno-relax
 CFLAGS += -I.
+# CFLAGS += -std=c2x
 CFLAGS += $(shell $(CC) -fno-stack-protector -E -x c /dev/null >/dev/null 2>&1 && echo -fno-stack-protector)
+
+CXXFLAGS = -Wall -Werror -Wextra 
+CXXFLAGS += -O -fno-omit-frame-pointer -ggdb -gdwarf-2
+CXXFLAGS += -MD
+CXXFLAGS += -mcmodel=medany
+CXXFLAGS += -ffreestanding -fno-common -mno-relax
+CXXFLAGS += -I.
+CXXFLAGS += $(shell $(CC) -fno-stack-protector -E -x c /dev/null >/dev/null 2>&1 && echo -fno-stack-protector)
+# CXXFLAGS += -nostdlib -nostdinc -nostdinc++ 
+CXXFLAGS += -fno-rtti -fno-exceptions 
+CXXFLAGS += -fno-unwind-tables -fno-asynchronous-unwind-tables
 
 # Disable PIE when possible (for Ubuntu 16.10 toolchain)
 ifneq ($(shell $(CC) -dumpspecs 2>/dev/null | grep -e '[^f]no-pie'),)
 CFLAGS += -fno-pie -no-pie
+CXXFLAGS += -fno-pie -no-pie
 endif
 ifneq ($(shell $(CC) -dumpspecs 2>/dev/null | grep -e '[^f]nopie'),)
 CFLAGS += -fno-pie -nopie
+CXXFLAGS += -fno-pie -no-pie
 endif
 
 LDFLAGS = -z max-page-size=4096

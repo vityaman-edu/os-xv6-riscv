@@ -1,3 +1,5 @@
+#include <kernel/types.h>
+
 struct buf;
 struct context;
 struct file;
@@ -77,8 +79,8 @@ int             piperead(struct pipe*, uint64, int);
 int             pipewrite(struct pipe*, uint64, int);
 
 // printf.c
-void            printf(char*, ...);
-void            panic(char*) __attribute__((noreturn));
+void            printf(const char*, ...);
+void            panic(const char*) __attribute__((noreturn));
 void            printfinit(void);
 
 // proc.c

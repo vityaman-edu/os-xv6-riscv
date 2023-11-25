@@ -105,6 +105,8 @@ void test1()
 int
 main(int argc, char *argv[])
 {
+  (void)argc;
+  (void)argv;
   test0();
   test1();
   exit(0);

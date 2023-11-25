@@ -53,7 +53,7 @@ void test1() {
         printf("[ERROR] dump2 returned unexpected error %d\n", error);
         goto failed;
       }
-      if (value != i) {
+      if ((int)value != i) {
         printf("[ERROR] expected: %d, found: %d\n", i, value);
         goto failed;
       }

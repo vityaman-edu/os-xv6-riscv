@@ -155,7 +155,7 @@ bad:
 
 // Is the directory dp empty except for "." and ".." ?
 static int isdirempty(struct inode* dp) {
-  int off;
+  uint64 off;
   struct dirent de;
 
   for (off = 2 * sizeof(de); off < dp->size; off += sizeof(de)) {
@@ -403,7 +403,7 @@ uint64 sys_chdir(void) {
 
 uint64 sys_exec(void) {
   char path[MAXPATH], *argv[MAXARG];
-  int i;
+  uint64 i;
   uint64 uargv, uarg;
 
   argaddr(1, &uargv);

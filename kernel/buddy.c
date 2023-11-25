@@ -285,6 +285,8 @@ int bd_mark_data_structures(char *p) {
 
 // Mark the range [end, HEAPSIZE) as allocated
 int bd_mark_unavailable(void *end, void *left) {
+  (void)left; // 
+
   int unavailable = BLK_SIZE(MAXSIZE) - (end - bd_base);
   if (unavailable > 0) unavailable = ROUNDUP(unavailable, LEAF_SIZE);
   printf("bd: 0x%x bytes unavailable\n", unavailable);

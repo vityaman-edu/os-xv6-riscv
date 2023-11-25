@@ -157,7 +157,7 @@ static int loadseg(
       n = sz - i;
     else
       n = PGSIZE;
-    if (readi(ip, 0, (uint64)pa, offset + i, n) != n)
+    if ((uint64)(readi(ip, 0, (uint64)pa, offset + i, n)) != n)
       return -1;
   }
 

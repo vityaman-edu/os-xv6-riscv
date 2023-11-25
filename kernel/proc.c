@@ -23,7 +23,7 @@ struct spinlock proc_list_lock;
 extern void forkret(void);
 static void freeproc(struct proc* p);
 
-extern char trampoline[]; // trampoline.S
+extern char trampoline[];  // trampoline.S
 
 // helps ensure that wakeups of wait()ing
 // parents are not lost. helps obey the
@@ -127,14 +127,11 @@ static struct proc* allocproc(void) {
 // including user pages.
 // list_lock must be held.
 static void freeproc(struct proc* p) {
-  if (p->kstack)
-    kfree((void*)p->kstack);
+  if (p->kstack) kfree((void*)p->kstack);
   p->kstack = 0;
-  if (p->trapframe)
-    kfree((void*)p->trapframe);
+  if (p->trapframe) kfree((void*)p->trapframe);
   p->trapframe = 0;
-  if (p->pagetable)
-    proc_freepagetable(p->pagetable, p->sz);
+  if (p->pagetable) proc_freepagetable(p->pagetable, p->sz);
 
   proc_list_remove(p);
   bd_free((void*)p);
@@ -147,8 +144,7 @@ pagetable_t proc_pagetable(struct proc* p) {
 
   // An empty page table.
   pagetable = uvmcreate();
-  if (pagetable == 0)
-    return 0;
+  if (pagetable == 0) return 0;
 
   // map the trampoline code (for system call return)
   // at the highest user virtual address.
@@ -205,8 +201,8 @@ void userinit(void) {
   p->sz = PGSIZE;
 
   // prepare for the very first "return" from kernel to user.
-  p->trapframe->epc = 0;     // user program counter
-  p->trapframe->sp = PGSIZE; // user stack pointer
+  p->trapframe->epc = 0;      // user program counter
+  p->trapframe->sp = PGSIZE;  // user stack pointer
 
   safestrcpy(p->name, "initcode", sizeof(p->name));
   p->cwd = namei("/");
@@ -262,8 +258,7 @@ int fork(void) {
 
   // increment reference counts on open file descriptors.
   for (i = 0; i < NOFILE; i++)
-    if (p->ofile[i])
-      np->ofile[i] = filedup(p->ofile[i]);
+    if (p->ofile[i]) np->ofile[i] = filedup(p->ofile[i]);
   np->cwd = idup(p->cwd);
 
   safestrcpy(np->name, p->name, sizeof(p->name));
@@ -298,8 +293,7 @@ void reparent(struct proc* p) {
 void exit(int status) {
   struct proc* p = myproc();
 
-  if (p == initproc)
-    panic("init exiting");
+  if (p == initproc) panic("init exiting");
 
   // Close all open files.
   for (int fd = 0; fd < NOFILE; fd++) {
@@ -322,7 +316,7 @@ void exit(int status) {
 
   // Parent might be sleeping in wait().
   wakeup_holding_proc_list_lock(p->parent);
- 
+
   p->xstate = status;
   p->state = ZOMBIE;
 
@@ -370,7 +364,7 @@ int wait(uint64 addr) {
     }
 
     // Wait for a child to exit.
-    sleep(p, &proc_list_lock); // DOC: wait-sleep
+    sleep(p, &proc_list_lock);  // DOC: wait-sleep
   }
 }
 
@@ -419,14 +413,10 @@ void sched(void) {
   int intena;
   struct proc* p = myproc();
 
-  if (!holding(&proc_list_lock))
-    panic("sched list_lock");
-  if (mycpu()->noff != 1)
-    panic("sched locks");
-  if (p->state == RUNNING)
-    panic("sched running");
-  if (intr_get())
-    panic("sched interruptible");
+  if (!holding(&proc_list_lock)) panic("sched list_lock");
+  if (mycpu()->noff != 1) panic("sched locks");
+  if (p->state == RUNNING) panic("sched running");
+  if (intr_get()) panic("sched interruptible");
 
   intena = mycpu()->intena;
   swtch(&p->context, &mycpu()->context);
@@ -473,7 +463,7 @@ void sleep(void* chan, struct spinlock* lk) {
   // (wakeup locks p->lock),
   // so it's okay to release lk.
   if (lk != &proc_list_lock) {
-    acquire(&proc_list_lock); // DOC: sleeplock1
+    acquire(&proc_list_lock);  // DOC: sleeplock1
     release(lk);
   }
 
@@ -503,7 +493,7 @@ void wakeup(void* chan) {
 
 // Wake up all processes sleeping on chan.
 void wakeup_holding_proc_list_lock(void* chan) {
-  for (struct proc* proc = proc_list_head.next; //
+  for (struct proc* proc = proc_list_head.next;  //
        proc != &proc_list_head;
        proc = proc->next) {
     if (proc != myproc()) {
@@ -594,8 +584,7 @@ void procdump(void) {
 
   printf("\n");
   for (p = proc_list_head.next; p != &proc_list_head; p = p->next) {
-    if (p->state == UNUSED)
-      continue;
+    if (p->state == UNUSED) continue;
     if (p->state >= 0 && p->state < NELEM(states) && states[p->state])
       state = states[p->state];
     else
@@ -609,7 +598,13 @@ void procdump(void) {
 }
 
 int dump(void) { return 0; }
-int dump2(int pid, int reg_num, uint64 ret_addr) { return 0; }
+
+int dump2(int pid, int reg_num, uint64 ret_addr) { 
+  (void)pid;
+  (void)reg_num;
+  (void)ret_addr;
+  return 0; 
+}
 
 static void proc_list_head_init(struct proc* proc) {
   proc->pid = -1;
