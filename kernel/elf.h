@@ -4,33 +4,33 @@
 
 // File header
 struct elfhdr {
-  uint magic;  // must equal ELF_MAGIC
-  uchar elf[12];
-  ushort type;
-  ushort machine;
-  uint version;
-  uint64 entry;
-  uint64 phoff;
-  uint64 shoff;
-  uint flags;
-  ushort ehsize;
-  ushort phentsize;
-  ushort phnum;
-  ushort shentsize;
-  ushort shnum;
-  ushort shstrndx;
+  UInt32 magic;  // must equal ELF_MAGIC
+  UChar elf[12];
+  UInt16 type;
+  UInt16 machine;
+  UInt32 version;
+  UInt64 entry;
+  UInt64 phoff;
+  UInt64 shoff;
+  UInt32 flags;
+  UInt16 ehsize;
+  UInt16 phentsize;
+  UInt16 phnum;
+  UInt16 shentsize;
+  UInt16 shnum;
+  UInt16 shstrndx;
 };
 
 // Program section header
 struct proghdr {
-  uint32 type;
-  uint32 flags;
-  uint64 off;
-  uint64 vaddr;
-  uint64 paddr;
-  uint64 filesz;
-  uint64 memsz;
-  uint64 align;
+  UInt32 type;
+  UInt32 flags;
+  UInt64 off;
+  UInt64 vaddr;
+  UInt64 paddr;
+  UInt64 filesz;
+  UInt64 memsz;
+  UInt64 align;
 };
 
 // Values for Proghdr type

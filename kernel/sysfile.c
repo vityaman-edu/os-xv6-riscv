@@ -47,7 +47,7 @@ static int fdalloc(struct file* f) {
   return -1;
 }
 
-uint64 sys_dup(void) {
+UInt64 sys_dup(void) {
   struct file* f;
   int fd;
 
@@ -59,10 +59,10 @@ uint64 sys_dup(void) {
   return fd;
 }
 
-uint64 sys_read(void) {
+UInt64 sys_read(void) {
   struct file* f;
   int n;
-  uint64 p;
+  UInt64 p;
 
   argaddr(1, &p);
   argint(2, &n);
@@ -71,10 +71,10 @@ uint64 sys_read(void) {
   return fileread(f, p, n);
 }
 
-uint64 sys_write(void) {
+UInt64 sys_write(void) {
   struct file* f;
   int n;
-  uint64 p;
+  UInt64 p;
 
   argaddr(1, &p);
   argint(2, &n);
@@ -84,7 +84,7 @@ uint64 sys_write(void) {
   return filewrite(f, p, n);
 }
 
-uint64 sys_close(void) {
+UInt64 sys_close(void) {
   int fd;
   struct file* f;
 
@@ -95,9 +95,9 @@ uint64 sys_close(void) {
   return 0;
 }
 
-uint64 sys_fstat(void) {
+UInt64 sys_fstat(void) {
   struct file* f;
-  uint64 st; // user pointer to struct stat
+  UInt64 st; // user pointer to struct stat
 
   argaddr(1, &st);
   if (argfd(0, 0, &f) < 0)
@@ -106,7 +106,7 @@ uint64 sys_fstat(void) {
 }
 
 // Create the path new as a link to the same inode as old.
-uint64 sys_link(void) {
+UInt64 sys_link(void) {
   char name[DIRSIZ], new[MAXPATH], old[MAXPATH];
   struct inode *dp, *ip;
 
@@ -155,11 +155,11 @@ bad:
 
 // Is the directory dp empty except for "." and ".." ?
 static int isdirempty(struct inode* dp) {
-  uint64 off;
+  UInt64 off;
   struct dirent de;
 
   for (off = 2 * sizeof(de); off < dp->size; off += sizeof(de)) {
-    if (readi(dp, 0, (uint64)&de, off, sizeof(de)) != sizeof(de))
+    if (readi(dp, 0, (UInt64)&de, off, sizeof(de)) != sizeof(de))
       panic("isdirempty: readi");
     if (de.inum != 0)
       return 0;
@@ -167,11 +167,11 @@ static int isdirempty(struct inode* dp) {
   return 1;
 }
 
-uint64 sys_unlink(void) {
+UInt64 sys_unlink(void) {
   struct inode *ip, *dp;
   struct dirent de;
   char name[DIRSIZ], path[MAXPATH];
-  uint off;
+  UInt32 off;
 
   if (argstr(0, path, MAXPATH) < 0)
     return -1;
@@ -200,7 +200,7 @@ uint64 sys_unlink(void) {
   }
 
   memset(&de, 0, sizeof(de));
-  if (writei(dp, 0, (uint64)&de, off, sizeof(de)) != sizeof(de))
+  if (writei(dp, 0, (UInt64)&de, off, sizeof(de)) != sizeof(de))
     panic("unlink: writei");
   if (ip->type == T_DIR) {
     dp->nlink--;
@@ -279,7 +279,7 @@ fail:
   return 0;
 }
 
-uint64 sys_open(void) {
+UInt64 sys_open(void) {
   char path[MAXPATH];
   int fd, omode;
   struct file* f;
@@ -346,7 +346,7 @@ uint64 sys_open(void) {
   return fd;
 }
 
-uint64 sys_mkdir(void) {
+UInt64 sys_mkdir(void) {
   char path[MAXPATH];
   struct inode* ip;
 
@@ -360,7 +360,7 @@ uint64 sys_mkdir(void) {
   return 0;
 }
 
-uint64 sys_mknod(void) {
+UInt64 sys_mknod(void) {
   struct inode* ip;
   char path[MAXPATH];
   int major, minor;
@@ -378,7 +378,7 @@ uint64 sys_mknod(void) {
   return 0;
 }
 
-uint64 sys_chdir(void) {
+UInt64 sys_chdir(void) {
   char path[MAXPATH];
   struct inode* ip;
   struct proc* p = myproc();
@@ -401,10 +401,10 @@ uint64 sys_chdir(void) {
   return 0;
 }
 
-uint64 sys_exec(void) {
+UInt64 sys_exec(void) {
   char path[MAXPATH], *argv[MAXARG];
-  uint64 i;
-  uint64 uargv, uarg;
+  UInt64 i;
+  UInt64 uargv, uarg;
 
   argaddr(1, &uargv);
   if (argstr(0, path, MAXPATH) < 0) {
@@ -415,7 +415,7 @@ uint64 sys_exec(void) {
     if (i >= NELEM(argv)) {
       goto bad;
     }
-    if (fetchaddr(uargv + sizeof(uint64) * i, (uint64*)&uarg) < 0) {
+    if (fetchaddr(uargv + sizeof(UInt64) * i, (UInt64*)&uarg) < 0) {
       goto bad;
     }
     if (uarg == 0) {
@@ -442,8 +442,8 @@ bad:
   return -1;
 }
 
-uint64 sys_pipe(void) {
-  uint64 fdarray; // user pointer to array of two integers
+UInt64 sys_pipe(void) {
+  UInt64 fdarray; // user pointer to array of two integers
   struct file *rf, *wf;
   int fd0, fd1;
   struct proc* p = myproc();

@@ -32,7 +32,8 @@ OBJS = \
   $K/list.o\
   $K/buddy.o\
 	$K/cxxstd/malloc.o\
-	$K/cxxstd/test.o
+	$K/cxxstd/test.o\
+	$K/modern/Bridge.o
 
 # riscv64-unknown-elf- or riscv64-linux-gnu-
 # perhaps in /opt/riscv/bin
@@ -172,7 +173,10 @@ fs.img: mkfs/mkfs README $(UPROGS)
 
 -include kernel/*.d user/*.d
 
-clean: 
+clean:
+	rm -rf */*/*.o */*/*.d
+	rm -rf */*/*/*.o */*/*/*.d
+	rm -rf */*/*/*/*.o */*/*/*/*.d
 	rm -f *.tex *.dvi *.idx *.aux *.log *.ind *.ilg \
 	*/*.o */*.d */*.asm */*.sym \
 	$U/initcode $U/initcode.out $K/kernel fs.img \

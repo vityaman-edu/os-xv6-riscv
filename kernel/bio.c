@@ -52,7 +52,7 @@ void binit(void) {
 // Look through buffer cache for block on device dev.
 // If not found, allocate a buffer.
 // In either case, return locked buffer.
-static struct buf* bget(uint dev, uint blockno) {
+static struct buf* bget(UInt32 dev, UInt32 blockno) {
   struct buf* b;
 
   acquire(&bcache.lock);
@@ -84,7 +84,7 @@ static struct buf* bget(uint dev, uint blockno) {
 }
 
 // Return a locked buf with the contents of the indicated block.
-struct buf* bread(uint dev, uint blockno) {
+struct buf* bread(UInt32 dev, UInt32 blockno) {
   struct buf* b;
 
   b = bget(dev, blockno);

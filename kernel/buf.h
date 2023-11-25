@@ -1,12 +1,12 @@
 struct buf {
   int valid;   // has data been read from disk?
   int disk;    // does disk "own" buf?
-  uint dev;
-  uint blockno;
+  UInt32 dev;
+  UInt32 blockno;
   struct sleeplock lock;
-  uint refcnt;
+  UInt32 refcnt;
   struct buf *prev; // LRU cache list
   struct buf *next;
-  uchar data[BSIZE];
+  UChar data[BSIZE];
 };
 

@@ -1,7 +1,11 @@
 ---
 BasedOnStyle: Google
 IndentWidth: 2
-ColumnLimit: 80
+ColumnLimit: 70
+AllowShortFunctionsOnASingleLine: None
+AllowShortIfStatementsOnASingleLine: false
+AllowShortLoopsOnASingleLine: false
+
 
 ---
 Language: Cpp

@@ -7,11 +7,11 @@
 #include "syscall.h"
 #include "defs.h"
 
-// Fetch the uint64 at addr from the current process.
-int fetchaddr(uint64 addr, uint64* ip) {
+// Fetch the UInt64 at addr from the current process.
+int fetchaddr(UInt64 addr, UInt64* ip) {
   struct proc* p = myproc();
   if (addr >= p->sz
-      || addr + sizeof(uint64)
+      || addr + sizeof(UInt64)
              > p->sz) // both tests needed, in case of overflow
     return -1;
   if (copyin(p->pagetable, (char*)ip, addr, sizeof(*ip)) != 0)
@@ -21,14 +21,14 @@ int fetchaddr(uint64 addr, uint64* ip) {
 
 // Fetch the nul-terminated string at addr from the current process.
 // Returns length of string, not including nul, or -1 for error.
-int fetchstr(uint64 addr, char* buf, int max) {
+int fetchstr(UInt64 addr, char* buf, int max) {
   struct proc* p = myproc();
   if (copyinstr(p->pagetable, buf, addr, max) < 0)
     return -1;
   return strlen(buf);
 }
 
-static uint64 argraw(int n) {
+static UInt64 argraw(int n) {
   struct proc* p = myproc();
   switch (n) {
   case 0:
@@ -54,45 +54,45 @@ void argint(int n, int* ip) { *ip = argraw(n); }
 // Retrieve an argument as a pointer.
 // Doesn't check for legality, since
 // copyin/copyout will do that.
-void argaddr(int n, uint64* ip) { *ip = argraw(n); }
+void argaddr(int n, UInt64* ip) { *ip = argraw(n); }
 
 // Fetch the nth word-sized system call argument as a null-terminated string.
 // Copies into buf, at most max.
 // Returns string length if OK (including nul), -1 if error.
 int argstr(int n, char* buf, int max) {
-  uint64 addr;
+  UInt64 addr;
   argaddr(n, &addr);
   return fetchstr(addr, buf, max);
 }
 
 // Prototypes for the functions that handle system calls.
-extern uint64 sys_fork(void);
-extern uint64 sys_exit(void);
-extern uint64 sys_wait(void);
-extern uint64 sys_pipe(void);
-extern uint64 sys_read(void);
-extern uint64 sys_kill(void);
-extern uint64 sys_exec(void);
-extern uint64 sys_fstat(void);
-extern uint64 sys_chdir(void);
-extern uint64 sys_dup(void);
-extern uint64 sys_getpid(void);
-extern uint64 sys_sbrk(void);
-extern uint64 sys_sleep(void);
-extern uint64 sys_uptime(void);
-extern uint64 sys_open(void);
-extern uint64 sys_write(void);
-extern uint64 sys_mknod(void);
-extern uint64 sys_unlink(void);
-extern uint64 sys_link(void);
-extern uint64 sys_mkdir(void);
-extern uint64 sys_close(void);
-extern uint64 sys_dump(void);
-extern uint64 sys_dump2(void);
+extern UInt64 sys_fork(void);
+extern UInt64 sys_exit(void);
+extern UInt64 sys_wait(void);
+extern UInt64 sys_pipe(void);
+extern UInt64 sys_read(void);
+extern UInt64 sys_kill(void);
+extern UInt64 sys_exec(void);
+extern UInt64 sys_fstat(void);
+extern UInt64 sys_chdir(void);
+extern UInt64 sys_dup(void);
+extern UInt64 sys_getpid(void);
+extern UInt64 sys_sbrk(void);
+extern UInt64 sys_sleep(void);
+extern UInt64 sys_uptime(void);
+extern UInt64 sys_open(void);
+extern UInt64 sys_write(void);
+extern UInt64 sys_mknod(void);
+extern UInt64 sys_unlink(void);
+extern UInt64 sys_link(void);
+extern UInt64 sys_mkdir(void);
+extern UInt64 sys_close(void);
+extern UInt64 sys_dump(void);
+extern UInt64 sys_dump2(void);
 
 // An array mapping syscall numbers from syscall.h
 // to the function that handles the system call.
-static uint64 (*syscalls[])(void) = {
+static UInt64 (*syscalls[])(void) = {
     [SYS_fork] = sys_fork,     [SYS_exit] = sys_exit,
     [SYS_wait] = sys_wait,     [SYS_pipe] = sys_pipe,
     [SYS_read] = sys_read,     [SYS_kill] = sys_kill,
