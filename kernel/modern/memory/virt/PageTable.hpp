@@ -48,12 +48,17 @@ class PageTable {
         return -1;
       }
 
-      memmove(new_mem, phys.AsPtr(), kPageSize);
+      memmove(frame_ptr, phys.AsPtr(), kPageSize);
+
       if (mappages(
-              dst.pagetable_, virt, kPageSize, (UInt64)new_mem, flags
+              dst.pagetable_,
+              virt,
+              kPageSize,
+              (UInt64)frame_ptr,
+              flags
           )
           != 0) {
-        kfree(new_mem);
+        kfree(frame_ptr);
         uvmunmap(dst.pagetable_, 0, virt / kPageSize, 1);
         return -1;
       }
