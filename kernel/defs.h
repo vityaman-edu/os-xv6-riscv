@@ -1,3 +1,5 @@
+#pragma once
+
 #include <kernel/types.h>
 
 struct buf;

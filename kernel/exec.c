@@ -1,3 +1,4 @@
+#include "kernel/modern/Bridge.h"
 #include "types.h"
 #include "param.h"
 #include "memlayout.h"
@@ -126,6 +127,10 @@ int exec(char* path, char** argv) {
   p->trapframe->epc = elf.entry; // initial program counter = main
   p->trapframe->sp = sp;         // initial stack pointer
   proc_freepagetable(oldpagetable, oldsz);
+
+  if (p->pid == 1) {
+    UserVirtMemoryDump(p->pagetable, p->sz);
+  }
 
   return argc; // this ends up in a0, the first argument to main(argc, argv)
 
