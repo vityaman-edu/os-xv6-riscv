@@ -1,5 +1,7 @@
 #pragma once
 
+// #define UB_ON_WRITE
+
 #include <cstddef>
 #include <optional>
 
@@ -42,13 +44,16 @@ class PageTable {
       const auto phys = pte.Physical();
       const auto flags = pte.Flags();
 
+#ifndef UB_ON_WRITE
       auto* const frame_ptr = kalloc();
       if (frame_ptr == nullptr) {
         uvmunmap(dst.pagetable_, 0, virt / kPageSize, 1);
         return -1;
       }
-
       memmove(frame_ptr, phys.AsPtr(), kPageSize);
+#else
+      // auto* const frame_ptr = phys.AsPtr();
+#endif
 
       if (mappages(
               dst.pagetable_,

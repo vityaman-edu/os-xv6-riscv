@@ -7,7 +7,7 @@ extern "C" {
 
 using xv6::kernel::memory::virt::PageTable;
 
-auto UserVityalMemoryCopy(
+auto UserVirtMemoryCopy(
     pagetable_t src, pagetable_t dst, UInt64 size
 ) -> int {
   auto source = PageTable(src, size);

@@ -316,7 +316,7 @@ void uvmfree(pagetable_t pagetable, UInt64 size) {
 // returns 0 on success, -1 on failure.
 // frees any allocated pages on failure.
 int uvmcopy(pagetable_t src, pagetable_t dst, UInt64 size) {
-  return UserVityalMemoryCopy(src, dst, size);
+  return UserVirtMemoryCopy(src, dst, size);
 
   // for (UInt64 virt = 0; virt < size; virt += PGSIZE) {
   //   pte_t const* const pte_ptr = translate(src, virt, 0);
