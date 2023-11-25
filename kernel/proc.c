@@ -92,7 +92,7 @@ static struct proc* allocproc(void) {
   p->pid = allocpid();
   p->state = USED;
 
-  if ((p->kstack = (uint64)kalloc()) == 0) {
+  if ((p->kstack = (UInt64)kalloc()) == 0) {
     freeproc(p);
     release(&proc_list_lock);
     return 0;
@@ -116,7 +116,7 @@ static struct proc* allocproc(void) {
   // Set up new context to start executing at forkret,
   // which returns to user space.
   memset(&p->context, 0, sizeof(p->context));
-  p->context.ra = (uint64)forkret;
+  p->context.ra = (UInt64)forkret;
   p->context.sp = p->kstack + PGSIZE;
   acquire(&proc_list_lock);
   proc_list_push(&proc_list_head, p);
@@ -150,7 +150,7 @@ pagetable_t proc_pagetable(struct proc* p) {
   // at the highest user virtual address.
   // only the supervisor uses it, on the way
   // to/from user space, so not PTE_U.
-  if (mappages(pagetable, TRAMPOLINE, PGSIZE, (uint64)trampoline, PTE_R | PTE_X)
+  if (mappages(pagetable, TRAMPOLINE, PGSIZE, (UInt64)trampoline, PTE_R | PTE_X)
       < 0) {
     uvmfree(pagetable, 0);
     return 0;
@@ -159,7 +159,7 @@ pagetable_t proc_pagetable(struct proc* p) {
   // map the trapframe page just below the trampoline page, for
   // trampoline.S.
   if (mappages(
-          pagetable, TRAPFRAME, PGSIZE, (uint64)(p->trapframe), PTE_R | PTE_W
+          pagetable, TRAPFRAME, PGSIZE, (UInt64)(p->trapframe), PTE_R | PTE_W
       )
       < 0) {
     uvmunmap(pagetable, TRAMPOLINE, 1, 0);
@@ -172,7 +172,7 @@ pagetable_t proc_pagetable(struct proc* p) {
 
 // Free a process's page table, and free the
 // physical memory it refers to.
-void proc_freepagetable(pagetable_t pagetable, uint64 sz) {
+void proc_freepagetable(pagetable_t pagetable, UInt64 sz) {
   uvmunmap(pagetable, TRAMPOLINE, 1, 0);
   uvmunmap(pagetable, TRAPFRAME, 1, 0);
   uvmfree(pagetable, sz);
@@ -181,7 +181,7 @@ void proc_freepagetable(pagetable_t pagetable, uint64 sz) {
 // a user program that calls exec("/init")
 // assembled from ../user/initcode.S
 // od -t xC ../user/initcode
-uchar initcode[]
+UChar initcode[]
     = {0x17, 0x05, 0x00, 0x00, 0x13, 0x05, 0x45, 0x02, 0x97, 0x05, 0x00,
        0x00, 0x93, 0x85, 0x35, 0x02, 0x93, 0x08, 0x70, 0x00, 0x73, 0x00,
        0x00, 0x00, 0x93, 0x08, 0x20, 0x00, 0x73, 0x00, 0x00, 0x00, 0xef,
@@ -215,7 +215,7 @@ void userinit(void) {
 // Grow or shrink user memory by n bytes.
 // Return 0 on success, -1 on failure.
 int growproc(int n) {
-  uint64 sz;
+  UInt64 sz;
   struct proc* p = myproc();
 
   sz = p->sz;
@@ -327,7 +327,7 @@ void exit(int status) {
 
 // Wait for a child process to exit and return its pid.
 // Return -1 if this process has no children.
-int wait(uint64 addr) {
+int wait(UInt64 addr) {
   int havekids, pid;
   struct proc* p = myproc();
 
@@ -544,7 +544,7 @@ int killed(struct proc* p) {
 // Copy to either a user address, or kernel address,
 // depending on usr_dst.
 // Returns 0 on success, -1 on error.
-int either_copyout(int user_dst, uint64 dst, void* src, uint64 len) {
+int either_copyout(int user_dst, UInt64 dst, void* src, UInt64 len) {
   struct proc* p = myproc();
   if (user_dst) {
     return copyout(p->pagetable, dst, src, len);
@@ -557,7 +557,7 @@ int either_copyout(int user_dst, uint64 dst, void* src, uint64 len) {
 // Copy from either a user address, or kernel address,
 // depending on usr_src.
 // Returns 0 on success, -1 on error.
-int either_copyin(void* dst, int user_src, uint64 src, uint64 len) {
+int either_copyin(void* dst, int user_src, UInt64 src, UInt64 len) {
   struct proc* p = myproc();
   if (user_src) {
     return copyin(p->pagetable, dst, src, len);
@@ -599,7 +599,7 @@ void procdump(void) {
 
 int dump(void) { return 0; }
 
-int dump2(int pid, int reg_num, uint64 ret_addr) { 
+int dump2(int pid, int reg_num, UInt64 ret_addr) { 
   (void)pid;
   (void)reg_num;
   (void)ret_addr;

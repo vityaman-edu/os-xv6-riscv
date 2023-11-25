@@ -32,7 +32,8 @@ OBJS = \
   $K/list.o\
   $K/buddy.o\
 	$K/cxxstd/malloc.o\
-	$K/cxxstd/test.o
+	$K/cxxstd/test.o\
+	$K/modern/Bridge.o
 
 # riscv64-unknown-elf- or riscv64-linux-gnu-
 # perhaps in /opt/riscv/bin

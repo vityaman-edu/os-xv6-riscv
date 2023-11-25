@@ -41,13 +41,13 @@ void test1() {
   pipe(pipefd);
   int child_proc = fork();
   if (child_proc == 0) {
-    uint64 a = 34381;
+    UInt64 a = 34381;
     dump2_test1_asm(pipefd[1], (char *)(&a), 8);
   } else {
-    uint64 a;
+    UInt64 a;
     read(pipefd[0], &a, 8);
     for (int i = 2; i < 12; i++) {
-      uint64 value;
+      UInt64 value;
       int error = dump2(child_proc, i, &value);
       if (error != 0) {
         printf("[ERROR] dump2 returned unexpected error %d\n", error);
@@ -74,13 +74,13 @@ void test2() {
   pipe(pipefd);
   int child_proc = fork();
   if (child_proc == 0) {
-    uint64 a = 34381;
+    UInt64 a = 34381;
     dump2_test2_asm(pipefd[1], (char *)(&a), 8);
   } else {
-    uint64 a;
+    UInt64 a;
     read(pipefd[0], &a, 8);
     for (int i = 2; i < 12; i++) {
-      uint64 value;
+      UInt64 value;
       int error = dump2(child_proc, i, &value);
       if (error != 0) {
         printf("[ERROR] dump2 returned unexpected error %d\n", error);
@@ -99,11 +99,11 @@ failed:
   printf("test 2 finished\n");
 }
 
-int dump2_test3_asm(int pid, uint64 *ptr);
+int dump2_test3_asm(int pid, UInt64 *ptr);
 
 void test3() {
   printf("test 3 started\n");
-  uint64 value;
+  UInt64 value;
   int result = dump2_test3_asm(getpid(), &value);
   if (result != 0) {
     printf("[ERROR] dump2 returned unexpected error %d\n", result);
@@ -121,7 +121,7 @@ failed:
 
 void test4() {
   printf("test 4 started\n");
-  uint64 a;
+  UInt64 a;
   printf("[INFO] testing nonexisting proccess\n");
   int error = dump2(2147483647, 10, &a);
   if (error != -2) {

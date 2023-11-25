@@ -49,7 +49,7 @@ void die(const char*);
 // convert to riscv byte order
 ushort xshort(ushort x) {
   ushort y;
-  uchar* a = (uchar*)&y;
+  UChar* a = (UChar*)&y;
   a[0] = x;
   a[1] = x >> 8;
   return y;
@@ -57,7 +57,7 @@ ushort xshort(ushort x) {
 
 uint xint(uint x) {
   uint y;
-  uchar* a = (uchar*)&y;
+  UChar* a = (UChar*)&y;
   a[0] = x;
   a[1] = x >> 8;
   a[2] = x >> 16;
@@ -227,7 +227,7 @@ uint ialloc(ushort type) {
 }
 
 void balloc(int used) {
-  uchar buf[BSIZE];
+  UChar buf[BSIZE];
   int i;
 
   printf("balloc: first %d blocks have been allocated\n", used);

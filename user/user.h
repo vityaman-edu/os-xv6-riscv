@@ -25,7 +25,7 @@ char* sbrk(int);
 int sleep(int);
 int uptime(void);
 int dump();
-int dump2(int pid, int register_num, uint64* return_value);
+int dump2(int pid, int register_num, UInt64* return_value);
 
 // ulib.c
 int stat(const char*, struct stat*);
@@ -36,10 +36,10 @@ int strcmp(const char*, const char*);
 void fprintf(int, const char*, ...);
 void printf(const char*, ...);
 char* gets(char*, int max);
-uint strlen(const char*);
-void* memset(void*, int, uint);
-void* malloc(uint);
+UInt32 strlen(const char*);
+void* memset(void*, int, UInt32);
+void* malloc(UInt32);
 void free(void*);
 int atoi(const char*);
-int memcmp(const void *, const void *, uint);
-void *memcpy(void *, const void *, uint);
+int memcmp(const void *, const void *, UInt32);
+void *memcpy(void *, const void *, UInt32);

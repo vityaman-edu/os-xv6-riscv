@@ -12,7 +12,7 @@
 extern char end[];  // first address after kernel.
                     // defined by kernel.ld.
 void kinit() {
-  char *p = (char *)PGROUNDUP((uint64)end);
+  char *p = (char *)PGROUNDUP((UInt64)end);
   bd_init(p, (void *)PHYSTOP);
 }
 

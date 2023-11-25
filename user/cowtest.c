@@ -15,7 +15,7 @@
 void
 simpletest()
 {
-    uint64 phys_size = PHYSTOP - KERNBASE;
+    UInt64 phys_size = PHYSTOP - KERNBASE;
     int sz = (phys_size / 3) * 2;
 
     printf("simple: ");
@@ -56,7 +56,7 @@ simpletest()
 void
 threetest()
 {
-    uint64 phys_size = PHYSTOP - KERNBASE;
+    UInt64 phys_size = PHYSTOP - KERNBASE;
     int sz = phys_size / 4;
     int pid1, pid2;
 

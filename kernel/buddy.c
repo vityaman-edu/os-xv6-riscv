@@ -97,9 +97,9 @@ void bd_print() {
 }
 
 // What is the first k such that 2^k >= n?
-int firstk(uint64 n) {
+int firstk(UInt64 n) {
   int k = 0;
-  uint64 size = LEAF_SIZE;
+  UInt64 size = LEAF_SIZE;
 
   while (size < n) {
     k++;
@@ -121,7 +121,7 @@ void *addr(int k, int bi) {
 }
 
 // allocate nbytes, but malloc won't return anything smaller than LEAF_SIZE
-void *bd_malloc(uint64 nbytes) {
+void *bd_malloc(UInt64 nbytes) {
   int fk, k;
 
   acquire(&lock);
@@ -197,7 +197,7 @@ int blk_index_next(int k, char *p) {
   return n;
 }
 
-int log2(uint64 n) {
+int log2(UInt64 n) {
   int k = 0;
   while (n > 1) {
     k++;
@@ -210,7 +210,7 @@ int log2(uint64 n) {
 void bd_mark(void *start, void *stop) {
   int bi, bj;
 
-  if (((uint64)start % LEAF_SIZE != 0) || ((uint64)stop % LEAF_SIZE != 0))
+  if (((UInt64)start % LEAF_SIZE != 0) || ((UInt64)stop % LEAF_SIZE != 0))
     panic("bd_mark");
 
   for (int k = 0; k < nsizes; k++) {
@@ -298,7 +298,7 @@ int bd_mark_unavailable(void *end, void *left) {
 
 // Initialize the buddy allocator: it manages memory from [base, end).
 void bd_init(void *base, void *end) {
-  char *p = (char *)ROUNDUP((uint64)base, LEAF_SIZE);
+  char *p = (char *)ROUNDUP((UInt64)base, LEAF_SIZE);
   int sz;
 
   initlock(&lock, "buddy");
@@ -335,7 +335,7 @@ void bd_init(void *base, void *end) {
     memset(bd_sizes[k].split, 0, sz);
     p += sz;
   }
-  p = (char *)ROUNDUP((uint64)p, LEAF_SIZE);
+  p = (char *)ROUNDUP((UInt64)p, LEAF_SIZE);
 
   // done allocating; mark the memory range [base, p) as allocated, so
   // that buddy will not hand out that memory.

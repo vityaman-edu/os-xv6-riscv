@@ -47,15 +47,15 @@ struct {
   // input
 #define INPUT_BUF_SIZE 128
   char buf[INPUT_BUF_SIZE];
-  uint r; // Read index
-  uint w; // Write index
-  uint e; // Edit index
+  UInt32 r; // Read index
+  UInt32 w; // Write index
+  UInt32 e; // Edit index
 } cons;
 
 //
 // user write()s to the console go here.
 //
-int consolewrite(int user_src, uint64 src, int n) {
+int consolewrite(int user_src, UInt64 src, int n) {
   int i;
 
   for (i = 0; i < n; i++) {
@@ -74,8 +74,8 @@ int consolewrite(int user_src, uint64 src, int n) {
 // user_dist indicates whether dst is a user
 // or kernel address.
 //
-int consoleread(int user_dst, uint64 dst, int n) {
-  uint target;
+int consoleread(int user_dst, UInt64 dst, int n) {
+  UInt32 target;
   int c;
   char cbuf;
 
