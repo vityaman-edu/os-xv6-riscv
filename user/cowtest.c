@@ -183,6 +183,9 @@ filetest()
 int
 main(int argc, char *argv[])
 {
+    (void)argc;
+    (void)argv;
+
     simpletest();
 
     // check that the first simpletest() freed the physical memory.

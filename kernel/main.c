@@ -31,6 +31,9 @@ void main() {
     userinit();          // first user process
     __sync_synchronize();
     started = 1;
+
+    CXXSTDTestMain();
+    
   } else {
     while (started == 0)
       ;
@@ -40,8 +43,6 @@ void main() {
     trapinithart();  // install kernel trap vector
     plicinithart();  // ask PLIC for device interrupts
   }
-
-  CXXSTDTestMain();
 
   scheduler();
 }

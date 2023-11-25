@@ -1,6 +1,7 @@
 #pragma once
 
 // #define UB_ON_WRITE
+// #define FAULT_ON_WRITE
 
 #include <algorithm>
 #include <cstddef>
@@ -47,7 +48,13 @@ class AddressSpace {
       }
 
       const auto phys = pte.Physical();
+
+#ifndef FAULT_ON_WRITE
       const auto flags = pte.Flags();
+#else
+      const auto flags = pte.Flags() & ~PTE_W;
+#endif
+
 
 #ifndef UB_ON_WRITE
       auto* const frame_ptr = kalloc();
