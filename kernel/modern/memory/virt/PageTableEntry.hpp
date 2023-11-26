@@ -15,39 +15,39 @@ class PageTableEntry {
   explicit PageTableEntry(pte_t* const ptr) : ptr_(ptr) {
   }
 
-  auto isValid() const -> bool {
+  bool isValid() const {
     return ((*ptr_) & PTE_V) != 0;
   }
 
-  auto isReadable() const -> bool {
+  bool isReadable() const {
     return ((*ptr_) & PTE_R) != 0;
   }
 
-  auto isWrittable() const -> bool {
+  bool isWrittable() const {
     return ((*ptr_) & PTE_W) != 0;
   }
 
-  auto isExecutable() const -> bool {
+  bool isExecutable() const {
     return ((*ptr_) & PTE_X) != 0;
   }
 
-  auto isUserAccesible() const -> bool {
+  bool isUserAccesible() const {
     return ((*ptr_) & PTE_U) != 0;
   }
 
-  auto physical() const -> Phys {
+  Phys physical() const {
     return Phys(PTE2PA(*ptr_));
   }
 
-  auto frame() const -> Frame {
+  Frame frame() const {
     return Frame(physical());
   }
 
-  auto flags() const -> int {
+  int flags() const {
     return PTE_FLAGS(*ptr_);
   }
 
-  auto print() const -> void {
+  void print() const {
     const auto* v = isValid() ? "V" : " ";
     const auto* r = isReadable() ? "R" : " ";
     const auto* w = isWrittable() ? "W" : " ";

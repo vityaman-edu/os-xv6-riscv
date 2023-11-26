@@ -9,7 +9,7 @@ extern "C" {
 
 namespace xv6::kernel::memory::allocator {
 
-auto FrameAllocator::Allocate() -> std::optional<Frame> {
+std::optional<Frame> FrameAllocator::Allocate() {
   auto* const ptr = kalloc();
   if (ptr == nullptr) {
     return std::nullopt;
@@ -17,11 +17,11 @@ auto FrameAllocator::Allocate() -> std::optional<Frame> {
   return Frame(Phys((std::uint64_t)ptr));
 }
 
-auto FrameAllocator::Deallocate(Frame frame) -> void {
+void FrameAllocator::Deallocate(Frame frame) {
   kfree(frame.begin().ptr());
 }
 
-auto FrameAllocator::Reference(Frame frame) -> void {
+void FrameAllocator::Reference(Frame frame) {
   (void)frame;
   library::error::Panic("Not implemented");
 }

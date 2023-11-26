@@ -19,11 +19,11 @@ class Block {
     }
   }
 
-  auto begin() const noexcept -> Address {
+  Address begin() const noexcept {
     return begin_;
   }
 
-  auto end() const noexcept -> Address {
+  Address end() const noexcept {
     return end_;
   }
 

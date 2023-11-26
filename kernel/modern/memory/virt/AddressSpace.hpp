@@ -31,11 +31,11 @@ class AddressSpace {
       : pagetable_(pagetable), size_(size) {
   }
 
-  auto TranslateExisting(Virt virt) -> std::optional<PageTableEntry> {
+  std::optional<PageTableEntry> TranslateExisting(Virt virt) {
     return Translate(virt, false);
   }
 
-  auto CopyTo(AddressSpace& dst) -> int {
+  int CopyTo(AddressSpace& dst) {
     for (UInt64 virt = 0; virt < size_; virt += Page::kSize) {
       const auto maybe_pte = TranslateExisting(Virt(virt));
       if (!maybe_pte.has_value()) {
@@ -89,14 +89,13 @@ class AddressSpace {
     return 0;
   }
 
-  auto print() -> void {
+  void print() {
     printf("Page Table: %p\n", pagetable_);
     print(pagetable_, 0);
   }
 
  private:
-  static auto print(pagetable_t pagetable, std::size_t level)
-      -> void {
+  static void print(pagetable_t pagetable, std::size_t level) {
     if (level == kLeafLevel + 1) {
       return;
     }
@@ -129,8 +128,7 @@ class AddressSpace {
     }
   }
 
-  auto Translate(Virt virt, bool alloc)
-      -> std::optional<PageTableEntry> {
+  std::optional<PageTableEntry> Translate(Virt virt, bool alloc) {
     auto* const pte = translate(
         pagetable_, virt.toInt(), static_cast<int>(alloc)
     );

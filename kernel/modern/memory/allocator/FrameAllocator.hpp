@@ -8,9 +8,9 @@ namespace xv6::kernel::memory::allocator {
 
 class FrameAllocator {
  public:
-  static auto Allocate() -> std::optional<Frame>;
-  static auto Deallocate(Frame frame) -> void;
-  static auto Reference(Frame frame) -> void;
+  static std::optional<Frame> Allocate();
+  static void Deallocate(Frame frame);
+  static void Reference(Frame frame);
 };
 
 }  // namespace xv6::kernel::memory::allocator

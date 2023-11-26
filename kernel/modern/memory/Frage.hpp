@@ -19,11 +19,11 @@ class Frage {
     }
   }
 
-  auto begin() const -> Addr<tag> {
+  Addr<tag> begin() const {
     return begin_;
   }
 
-  auto end() const -> Addr<tag> {
+  Addr<tag> end() const {
     return begin_ + kSize;
   }
 

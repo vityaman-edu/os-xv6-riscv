@@ -13,19 +13,19 @@ class Addr {
   explicit Addr(std::uint64_t value) : value_(value) {
   }
 
-  [[nodiscard]] auto ptr() const -> std::uint8_t* {
+  [[nodiscard]] std::uint8_t* ptr() const {
     return (std::uint8_t*)value_;
   }
 
-  [[nodiscard]] auto toInt() const -> std::uint64_t {
+  [[nodiscard]] std::uint64_t toInt() const {
     return value_;
   }
 
-  auto operator<(const Addr& rhs) const -> bool {
+  bool operator<(const Addr& rhs) const {
     return value_ < rhs.value_;
   }
 
-  auto operator+(std::size_t shift) const -> Addr {
+  Addr operator+(std::size_t shift) const {
     return Addr(value_ + shift);
   }
 
