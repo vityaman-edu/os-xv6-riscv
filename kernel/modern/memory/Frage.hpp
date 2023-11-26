@@ -27,6 +27,10 @@ class Frage {
     return begin_ + kSize;
   }
 
+  static Frage containing(Addr<tag> addr) {
+    return Frage(Addr<tag>(PGROUNDDOWN(addr.toInt())));
+  }
+
  private:
   Addr<tag> begin_;
 };
