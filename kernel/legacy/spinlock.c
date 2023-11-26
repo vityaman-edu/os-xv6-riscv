@@ -8,7 +8,7 @@
 #include "proc.h"
 #include "defs.h"
 
-void initlock(struct spinlock* lk, char* name) {
+void initlock(struct spinlock* lk, const char* name) {
   lk->name = name;
   lk->locked = 0;
   lk->cpu = 0;

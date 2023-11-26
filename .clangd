@@ -11,6 +11,8 @@ Diagnostics:
       llvmlibc-callee-namespace,
       llvmlibc-restrict-system-libc-headers,
 
+      modernize-use-trailing-return-type,
+
       android-cloexec-pipe,
       concurrency-mt-unsafe,
       bugprone-easily-swappable-parameters,

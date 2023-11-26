@@ -35,6 +35,7 @@ OBJS = \
 	$K/cxxstd/test.o\
 	$K/modern/Bridge.o\
 	$K/modern/library/error/Panic.o\
+	$K/modern/library/sync/Spinlock.o\
 	$K/modern/memory/allocator/FrameAllocator.o\
 
 # riscv64-unknown-elf- or riscv64-linux-gnu-

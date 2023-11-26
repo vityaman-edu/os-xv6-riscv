@@ -1,7 +1,7 @@
 #pragma once
 
-#define UB_ON_WRITE
-#define FAULT_ON_WRITE
+// #define UB_ON_WRITE
+// #define FAULT_ON_WRITE
 
 #include <algorithm>
 #include <cstddef>
@@ -19,7 +19,7 @@ extern "C" {
 
 namespace xv6::kernel::memory::virt {
 
-using allocator::FrameAllocator;
+using allocator::GlobalFrameAllocator;
 using library::math::DigitsCount;
 
 class AddressSpace {
@@ -36,7 +36,7 @@ class AddressSpace {
   }
 
   int CopyTo(AddressSpace& dst) {
-    for (UInt64 virt = 0; virt < size_; virt += Page::kSize) {
+    for (UInt64 virt = 0; virt < size_; virt += Page::Size) {
       const auto maybe_pte = TranslateExisting(Virt(virt));
       if (!maybe_pte.has_value()) {
         Panic("uvmcopy: pte should exist");
@@ -56,9 +56,9 @@ class AddressSpace {
 #endif
 
 #ifndef UB_ON_WRITE
-      const auto maybe_that_frame = FrameAllocator::Allocate();
+      const auto maybe_that_frame = GlobalFrameAllocator->Allocate();
       if (!maybe_that_frame.has_value()) {
-        uvmunmap(dst.pagetable_, 0, virt / Page::kSize, 1);
+        uvmunmap(dst.pagetable_, 0, virt / Page::Size, 1);
         return -1;
       }
       const auto that_frame = maybe_that_frame.value();
@@ -66,7 +66,7 @@ class AddressSpace {
       memmove(
           /* dst: */ that_frame.begin().ptr(),
           /* src: */ this_frame.begin().ptr(),
-          Frame::kSize
+          Frame::Size
       );
 #else
       const auto that_frame = this_frame;
@@ -75,13 +75,13 @@ class AddressSpace {
       auto status = mappages(
           dst.pagetable_,
           virt,
-          Frame::kSize,
+          Frame::Size,
           that_frame.begin().toInt(),
           flags
       );
       if (status != 0) {
-        FrameAllocator::Deallocate(that_frame);
-        uvmunmap(dst.pagetable_, 0, virt / Frame::kSize, 1);
+        GlobalFrameAllocator->Deallocate(that_frame);
+        uvmunmap(dst.pagetable_, 0, virt / Frame::Size, 1);
         return -1;
       }
     }

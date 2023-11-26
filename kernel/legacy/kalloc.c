@@ -9,11 +9,14 @@
 #include "riscv.h"
 #include "defs.h"
 
+#include <kernel/modern/Bridge.h>
+
 extern char end[];  // first address after kernel.
                     // defined by kernel.ld.
 void kinit() {
   char *p = (char *)PGROUNDUP((UInt64)end);
   bd_init(p, (void *)PHYSTOP);
+  GlobalFrameAllocatorInit();
 }
 
 // Free the page of physical memory pointed at by v,

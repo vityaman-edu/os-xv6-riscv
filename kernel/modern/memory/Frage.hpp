@@ -11,10 +11,10 @@ using library::error::Panic;
 template <MemoryTag tag>
 class Frage {
  public:
-  static constexpr std::size_t kSize = 4096;
+  static constexpr std::size_t Size = 4096;
 
   explicit Frage(Addr<tag> begin) : begin_(begin) {
-    if (begin.toInt() % kSize != 0) {
+    if (begin.toInt() % Size != 0) {
       Panic("invalid frage start address");
     }
   }
@@ -24,7 +24,11 @@ class Frage {
   }
 
   Addr<tag> end() const {
-    return begin_ + kSize;
+    return begin_ + Size;
+  }
+
+  [[nodiscard]] std::size_t index() const {
+    return begin_.toInt() / Size;
   }
 
   static Frage containing(Addr<tag> addr) {
