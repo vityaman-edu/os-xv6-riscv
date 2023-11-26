@@ -1,6 +1,6 @@
 #pragma once
 
-#include "kernel/modern/memory/address/Address.hpp"
+#include "kernel/modern/memory/Address.hpp"
 
 extern "C" {
 #include <kernel/riscv.h>
@@ -15,41 +15,45 @@ class PageTableEntry {
   explicit PageTableEntry(pte_t* const ptr) : ptr_(ptr) {
   }
 
-  auto IsValid() const -> bool {
+  auto isValid() const -> bool {
     return ((*ptr_) & PTE_V) != 0;
   }
 
-  auto IsReadable() const -> bool {
+  auto isReadable() const -> bool {
     return ((*ptr_) & PTE_R) != 0;
   }
 
-  auto IsWrittable() const -> bool {
+  auto isWrittable() const -> bool {
     return ((*ptr_) & PTE_W) != 0;
   }
 
-  auto IsExecutable() const -> bool {
+  auto isExecutable() const -> bool {
     return ((*ptr_) & PTE_X) != 0;
   }
 
-  auto IsUserAccesible() const -> bool {
+  auto isUserAccesible() const -> bool {
     return ((*ptr_) & PTE_U) != 0;
   }
 
-  auto Physical() const -> address::Phys {
-    return address::Phys(PTE2PA(*ptr_));
+  auto physical() const -> Phys {
+    return Phys(PTE2PA(*ptr_));
   }
 
-  auto Flags() const -> int {
+  auto frame() const -> Frame {
+    return Frame(physical());
+  }
+
+  auto flags() const -> int {
     return PTE_FLAGS(*ptr_);
   }
 
-  auto Print() const -> void {
-    const auto* v = !IsValid() ? "INVALID " : "";
-    const auto* r = IsReadable() ? "R" : " ";
-    const auto* w = IsWrittable() ? "W" : " ";
-    const auto* e = IsExecutable() ? "E" : "D";
-    const auto* u = IsUserAccesible() ? "U" : "K";
-    const auto p = Physical().AsPtr();
+  auto print() const -> void {
+    const auto* v = isValid() ? "V" : " ";
+    const auto* r = isReadable() ? "R" : " ";
+    const auto* w = isWrittable() ? "W" : " ";
+    const auto* e = isExecutable() ? "X" : " ";
+    const auto* u = isUserAccesible() ? "U" : " ";
+    const auto p = physical().ptr();
     printf("PTE |%s%s%s%s%s| %p", v, r, w, e, u, p);
   }
 

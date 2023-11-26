@@ -15,5 +15,5 @@ auto UserVirtMemoryCopy(pagetable_t src, pagetable_t dst, UInt64 size)
 }
 
 auto UserVirtMemoryDump(pagetable_t pagetable, UInt64 size) -> void {
-  AddressSpace(pagetable, size).Print();
+  AddressSpace(pagetable, size).print();
 }

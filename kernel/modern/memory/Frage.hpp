@@ -1,0 +1,38 @@
+#pragma once
+
+#include "Address.hpp"
+#include "MemoryTag.hpp"
+#include <kernel/modern/library/error/Panic.hpp>
+
+namespace xv6::kernel::memory {
+
+using library::error::Panic;
+
+template <MemoryTag tag>
+class Frage {
+ public:
+  static constexpr std::size_t kSize = 4096;
+
+  explicit Frage(Addr<tag> begin) : begin_(begin) {
+    if (begin.toInt() % kSize != 0) {
+      Panic("invalid frage start address");
+    }
+  }
+
+  auto begin() const -> Addr<tag> {
+    return begin_;
+  }
+
+  auto end() const -> Addr<tag> {
+    return begin_ + kSize;
+  }
+
+ private:
+  Addr<tag> begin_;
+};
+
+using Frame = Frage<MemoryTag::PHYSICAL>;
+
+using Page = Frage<MemoryTag::VIRTUAL>;
+
+}  // namespace xv6::kernel::memory

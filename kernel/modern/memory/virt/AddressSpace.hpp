@@ -7,9 +7,11 @@
 #include <cstddef>
 #include <optional>
 
-#include <kernel/modern/memory/address/Address.hpp>
+#include <kernel/modern/memory/Address.hpp>
+#include <kernel/modern/memory/allocator/FrameAllocator.hpp>
 #include <kernel/modern/memory/virt/PageTableEntry.hpp>
 #include <kernel/modern/library/math/Number.hpp>
+#include <kernel/modern/library/error/Panic.hpp>
 
 extern "C" {
 #include <kernel/defs.h>
@@ -17,12 +19,11 @@ extern "C" {
 
 namespace xv6::kernel::memory::virt {
 
-using address::Virt;
+using allocator::FrameAllocator;
 using library::math::DigitsCount;
 
 class AddressSpace {
   static constexpr std::size_t kPageTableSize = 512;
-  static constexpr std::size_t kPageSize = 4096;
   static constexpr std::size_t kLeafLevel = 3;
 
  public:
@@ -30,49 +31,57 @@ class AddressSpace {
       : pagetable_(pagetable), size_(size) {
   }
 
-  auto TranslateExisting(address::Virt virt)
-      -> std::optional<PageTableEntry> {
+  auto TranslateExisting(Virt virt) -> std::optional<PageTableEntry> {
     return Translate(virt, false);
   }
 
   auto CopyTo(AddressSpace& dst) -> int {
-    for (UInt64 virt = 0; virt < size_; virt += kPageSize) {
+    for (UInt64 virt = 0; virt < size_; virt += Page::kSize) {
       const auto maybe_pte = TranslateExisting(Virt(virt));
       if (!maybe_pte.has_value()) {
-        panic("uvmcopy: pte should exist");
+        Panic("uvmcopy: pte should exist");
       }
 
       const auto pte = maybe_pte.value();
-      if (!pte.IsValid()) {
-        panic("uvmcopy: page not present");
+      if (!pte.isValid()) {
+        Panic("uvmcopy: page not present");
       }
 
-      const auto phys = pte.Physical();
+      const auto this_frame = pte.frame();
 
 #ifndef FAULT_ON_WRITE
-      const auto flags = pte.Flags();
+      const auto flags = pte.flags();
 #else
-      const auto flags = pte.Flags() & ~PTE_W;
+      const auto flags = pte.flags() & ~PTE_W;
 #endif
 
-
 #ifndef UB_ON_WRITE
-      auto* const frame_ptr = kalloc();
-      if (frame_ptr == nullptr) {
-        uvmunmap(dst.pagetable_, 0, virt / kPageSize, 1);
+      const auto maybe_that_frame = FrameAllocator::Allocate();
+      if (!maybe_that_frame.has_value()) {
+        uvmunmap(dst.pagetable_, 0, virt / Page::kSize, 1);
         return -1;
       }
-      memmove(frame_ptr, phys.AsPtr(), kPageSize);
+      const auto that_frame = maybe_that_frame.value();
+
+      memmove(
+          /* dst: */ that_frame.begin().ptr(),
+          /* src: */ this_frame.begin().ptr(),
+          Frame::kSize
+      );
 #else
-      auto* const frame_ptr = phys.AsPtr();
+      const auto that_frame = this_frame;
 #endif
 
       auto status = mappages(
-          dst.pagetable_, virt, kPageSize, (UInt64)frame_ptr, flags
+          dst.pagetable_,
+          virt,
+          Frame::kSize,
+          that_frame.begin().toInt(),
+          flags
       );
       if (status != 0) {
-        kfree(frame_ptr);
-        uvmunmap(dst.pagetable_, 0, virt / kPageSize, 1);
+        FrameAllocator::Deallocate(that_frame);
+        uvmunmap(dst.pagetable_, 0, virt / Frame::kSize, 1);
         return -1;
       }
     }
@@ -80,20 +89,21 @@ class AddressSpace {
     return 0;
   }
 
-  auto Print() -> void {
+  auto print() -> void {
     printf("Page Table: %p\n", pagetable_);
-    Print(pagetable_, 0);
+    print(pagetable_, 0);
   }
 
  private:
-  static auto Print(pagetable_t pagetable, std::size_t level)
+  static auto print(pagetable_t pagetable, std::size_t level)
       -> void {
     if (level == kLeafLevel + 1) {
       return;
     }
+
     for (std::size_t i = 0; i < kPageTableSize; ++i) {
       const auto pte = PageTableEntry(&pagetable[i]);
-      if (pte.IsValid()) {
+      if (pte.isValid()) {
         for (std::size_t i = 0; i < level; ++i) {
           printf(".. ");
         }
@@ -109,24 +119,25 @@ class AddressSpace {
           default: {
           } break;
         }
+
         printf("%s%d: ", space, i);
-        pte.Print();
+        pte.print();
         printf("\n");
 
-        Print((pagetable_t)pte.Physical().ToUInt64(), level + 1);
+        print((pagetable_t)pte.physical().toInt(), level + 1);
       }
     }
   }
 
-  auto Translate(address::Virt virt, bool alloc)
+  auto Translate(Virt virt, bool alloc)
       -> std::optional<PageTableEntry> {
-    pte_t* const ptr = translate(
-        pagetable_, virt.ToUInt64(), static_cast<int>(alloc)
+    auto* const pte = translate(
+        pagetable_, virt.toInt(), static_cast<int>(alloc)
     );
-    if (ptr == nullptr) {
+    if (pte == nullptr) {
       return std::nullopt;
     }
-    return PageTableEntry(ptr);
+    return PageTableEntry(pte);
   }
 
   pagetable_t pagetable_;
