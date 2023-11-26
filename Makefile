@@ -35,6 +35,7 @@ OBJS = \
 	$K/cxxstd/test.o\
 	$K/modern/Bridge.o\
 	$K/modern/memory/Address.o\
+	$K/modern/memory/virt/AddressSpace.o\
 	$K/modern/library/error/Panic.o\
 	$K/modern/library/sync/Spinlock.o\
 	$K/modern/memory/allocator/FrameAllocator.o\

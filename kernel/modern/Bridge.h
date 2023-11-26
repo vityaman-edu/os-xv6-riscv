@@ -13,3 +13,5 @@ void GlobalFrameAllocatorInit();
 void* GlobalFrameAllocatorAllocate();
 
 void GlobalFrameAllocatorDeallocate(void* phys);
+
+void GlobalFrameAllocatorReference(void* phys);

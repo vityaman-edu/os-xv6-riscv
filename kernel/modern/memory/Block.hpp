@@ -8,28 +8,26 @@ namespace xv6::kernel::memory {
 
 using library::error::Panic;
 
-template <MemoryTag tag>
+template <class Unit>
 class Block {
  public:
-  using Address = Addr<tag>;
-
-  Block(Address begin, Address end) : begin_(begin), end_(end) {
+  Block(Unit begin, Unit end) : begin_(begin), end_(end) {
     if (!(begin < end)) {
       Panic("Invalid block as begin >= end");
     }
   }
 
-  Address begin() const noexcept {
+  Unit begin() const noexcept {
     return begin_;
   }
 
-  Address end() const noexcept {
+  Unit end() const noexcept {
     return end_;
   }
 
  private:
-  Address begin_;
-  Address end_;
+  Unit begin_;
+  Unit end_;
 };
 
 }  // namespace xv6::kernel::memory

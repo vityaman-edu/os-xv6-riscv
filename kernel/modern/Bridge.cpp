@@ -1,4 +1,3 @@
-
 extern "C" {
 #include <kernel/modern/Bridge.h>
 }
@@ -8,6 +7,8 @@ extern "C" {
 #include <kernel/modern/memory/allocator/FrameAllocator.hpp>
 #include <kernel/modern/memory/virt/AddressSpace.hpp>
 #include <kernel/modern/memory/allocator/FrameAllocator.hpp>
+
+// #define COW_DEBUG
 
 using xv6::kernel::library::error::Panic;
 using xv6::kernel::memory::Frame;
@@ -23,7 +24,7 @@ int UserVirtMemoryCopy(
 ) {
   auto source = AddressSpace(src, size);
   auto destination = AddressSpace(dst, size);
-  return source.CopyTo(destination);
+  return source.DuplicateTo(destination);
 }
 
 void UserVirtMemoryDump(pagetable_t pagetable, UInt64 size) {
@@ -112,4 +113,9 @@ void* GlobalFrameAllocatorAllocate() {
 void GlobalFrameAllocatorDeallocate(void* phys) {
   const auto frame = Frame(Phys::unsafeFrom((std::uint64_t)phys));
   GlobalFrameAllocator->Deallocate(frame);
+}
+
+void GlobalFrameAllocatorReference(void* phys) {
+  const auto frame = Frame(Phys::unsafeFrom((std::uint64_t)phys));
+  GlobalFrameAllocator->Reference(frame);
 }

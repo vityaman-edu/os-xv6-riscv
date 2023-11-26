@@ -17,7 +17,7 @@ void initlock(struct spinlock* lk, const char* name) {
 // Acquire the lock.
 // Loops (spins) until the lock is acquired.
 void acquire(struct spinlock* lk) {
-  push_off(); // disable interrupts to avoid deadlock.
+  push_off();  // disable interrupts to avoid deadlock.
   if (holding(lk)) {
     panic("acquire");
   }
@@ -26,8 +26,18 @@ void acquire(struct spinlock* lk) {
   //   a5 = 1
   //   s1 = &lk->locked
   //   amoswap.w.aq a5, a5, (s1)
+  UInt64 tries = 0;
+  const UInt64 limit = 100000000;
   while (__sync_lock_test_and_set(&lk->locked, 1) != 0) {
-    // Do nothing
+    tries += 1;
+    if (limit < tries) {
+      printf(
+          "[warn] possible deadlock on lock %s, waiting for %d\n",
+          lk->name,
+          lk->cpu->proc->pid
+      );
+      tries = 0;
+    }
   }
 
   // Tell the C compiler and the processor to not move loads or stores
@@ -74,9 +84,10 @@ int holding(struct spinlock* lock) {
   return (lock->locked && lock->cpu == mycpu());
 }
 
-// push_off/pop_off are like intr_off()/intr_on() except that they are matched:
-// it takes two pop_off()s to undo two push_off()s.  Also, if interrupts
-// are initially off, then push_off, pop_off leaves them off.
+// push_off/pop_off are like intr_off()/intr_on() except that they are
+// matched: it takes two pop_off()s to undo two push_off()s.  Also, if
+// interrupts are initially off, then push_off, pop_off leaves them
+// off.
 
 void push_off(void) {
   int old = intr_get();

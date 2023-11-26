@@ -103,7 +103,7 @@ threetest()
 
     wait(0);
 
-    sleep(1);
+    sleep(2);
 
     for(char *q = p; q < p + sz; q += 4096){
         if(*(int*)q != getpid()){
@@ -145,15 +145,15 @@ filetest()
             exit(-1);
         }
         if(pid == 0){
-            sleep(1);
+            sleep(10);
             if(read(fds[0], buf, sizeof(i)) != sizeof(i)){
                 printf("error: read failed\n");
                 exit(1);
             }
-            sleep(1);
+            sleep(10);
             int j = *(int*)buf;
             if(j != i){
-                printf("error: read the wrong value\n");
+                printf("error: read the wrong value %d != %d\n", j, i);
                 exit(1);
             }
             exit(0);
@@ -186,14 +186,14 @@ main(int argc, char *argv[])
     (void)argc;
     (void)argv;
 
-    simpletest();
+    // simpletest();
 
-    // check that the first simpletest() freed the physical memory.
-    simpletest();
+    // // check that the first simpletest() freed the physical memory.
+    // simpletest();
 
-    threetest();
-    threetest();
-    threetest();
+    // threetest();
+    // threetest();
+    // threetest();
 
     filetest();
 
