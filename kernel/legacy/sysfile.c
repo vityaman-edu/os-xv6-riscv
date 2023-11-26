@@ -23,12 +23,16 @@ static int argfd(int n, int* pfd, struct file** pf) {
   struct file* f;
 
   argint(n, &fd);
-  if (fd < 0 || fd >= NOFILE || (f = myproc()->ofile[fd]) == 0)
+  if (fd < 0 || fd >= NOFILE || (f = myproc()->ofile[fd]) == 0) {
     return -1;
-  if (pfd)
+  }
+
+  if (pfd) {
     *pfd = fd;
-  if (pf)
+  }
+  if (pf) {
     *pf = f;
+  }
   return 0;
 }
 
@@ -66,8 +70,9 @@ UInt64 sys_read(void) {
 
   argaddr(1, &p);
   argint(2, &n);
-  if (argfd(0, 0, &f) < 0)
+  if (argfd(0, 0, &f) < 0) {
     return -1;
+  }
   return fileread(f, p, n);
 }
 
@@ -97,7 +102,7 @@ UInt64 sys_close(void) {
 
 UInt64 sys_fstat(void) {
   struct file* f;
-  UInt64 st; // user pointer to struct stat
+  UInt64 st;  // user pointer to struct stat
 
   argaddr(1, &st);
   if (argfd(0, 0, &f) < 0)
@@ -222,7 +227,9 @@ bad:
   return -1;
 }
 
-static struct inode* create(char* path, short type, short major, short minor) {
+static struct inode* create(
+    char* path, short type, short major, short minor
+) {
   struct inode *ip, *dp;
   char name[DIRSIZ];
 
@@ -234,7 +241,8 @@ static struct inode* create(char* path, short type, short major, short minor) {
   if ((ip = dirlookup(dp, name, 0)) != 0) {
     iunlockput(dp);
     ilock(ip);
-    if (type == T_FILE && (ip->type == T_FILE || ip->type == T_DEVICE))
+    if (type == T_FILE
+        && (ip->type == T_FILE || ip->type == T_DEVICE))
       return ip;
     iunlockput(ip);
     return 0;
@@ -251,9 +259,10 @@ static struct inode* create(char* path, short type, short major, short minor) {
   ip->nlink = 1;
   iupdate(ip);
 
-  if (type == T_DIR) { // Create . and .. entries.
+  if (type == T_DIR) {  // Create . and .. entries.
     // No ip->nlink++ for ".": avoid cyclic ref count.
-    if (dirlink(ip, ".", ip->inum) < 0 || dirlink(ip, "..", dp->inum) < 0)
+    if (dirlink(ip, ".", ip->inum) < 0
+        || dirlink(ip, "..", dp->inum) < 0)
       goto fail;
   }
 
@@ -262,7 +271,7 @@ static struct inode* create(char* path, short type, short major, short minor) {
 
   if (type == T_DIR) {
     // now that success is guaranteed:
-    dp->nlink++; // for ".."
+    dp->nlink++;  // for ".."
     iupdate(dp);
   }
 
@@ -351,7 +360,8 @@ UInt64 sys_mkdir(void) {
   struct inode* ip;
 
   begin_op();
-  if (argstr(0, path, MAXPATH) < 0 || (ip = create(path, T_DIR, 0, 0)) == 0) {
+  if (argstr(0, path, MAXPATH) < 0
+      || (ip = create(path, T_DIR, 0, 0)) == 0) {
     end_op();
     return -1;
   }
@@ -443,7 +453,7 @@ bad:
 }
 
 UInt64 sys_pipe(void) {
-  UInt64 fdarray; // user pointer to array of two integers
+  UInt64 fdarray;  // user pointer to array of two integers
   struct file *rf, *wf;
   int fd0, fd1;
   struct proc* p = myproc();
@@ -460,8 +470,12 @@ UInt64 sys_pipe(void) {
     return -1;
   }
   if (copyout(p->pagetable, fdarray, (char*)&fd0, sizeof(fd0)) < 0
-      || copyout(p->pagetable, fdarray + sizeof(fd0), (char*)&fd1, sizeof(fd1))
-             < 0) {
+      || copyout(
+             p->pagetable,
+             fdarray + sizeof(fd0),
+             (char*)&fd1,
+             sizeof(fd1)
+         ) < 0) {
     p->ofile[fd0] = 0;
     p->ofile[fd1] = 0;
     fileclose(rf);

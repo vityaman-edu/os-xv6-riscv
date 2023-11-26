@@ -49,9 +49,12 @@ int UVMCOWFixPageFault(
     space.print();
 #endif
 
-
     if (!pte->isValid()) {
       return -2;
+    }
+
+    if (!pte->isCopiedOnWrite()) {
+      return -7;
     }
 
     if (pte->isWrittable()) {
@@ -75,13 +78,14 @@ int UVMCOWFixPageFault(
             /* src: */ this_frame.begin().ptr(),
             Frame::Size
         );
-        pte->setFrame(*that_frame);
+        pte->setFrame(that_frame.value());
         GlobalFrameAllocator->Deallocate(this_frame);
       } else {
         return -4;
       }
     }
 
+    pte->setCopiedOnWrite(false);
     pte->setWrittable(true);
 
 #ifdef COW_DEBUG

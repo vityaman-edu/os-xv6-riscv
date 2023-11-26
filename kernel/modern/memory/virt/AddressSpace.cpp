@@ -1,4 +1,10 @@
 #include <kernel/modern/memory/virt/AddressSpace.hpp>
+#include "kernel/legacy/defs.h"
+
+extern "C" {
+
+extern pagetable_t kernel_pagetable;
+}
 
 #define UB_ON_WRITE
 #define FAULT_ON_WRITE
@@ -12,17 +18,17 @@ int AddressSpace::DuplicateTo(AddressSpace& dst) {
       Panic("uvmcopy: pte should exist");
     }
 
-    const auto pte = maybe_pte.value();
-    if (!pte.isValid()) {
+    auto src_pte = maybe_pte.value();
+    if (!src_pte.isValid()) {
       Panic("uvmcopy: page not present");
     }
 
-    const auto this_frame = pte.frame();
+    const auto this_frame = src_pte.frame();
 
 #ifndef FAULT_ON_WRITE
-    const auto flags = pte.flags();
+    const auto flags = src_pte.flags();
 #else
-    const auto flags = pte.flags() & ~PTE_W;
+    const auto flags = (src_pte.flags() & ~PTE_W) | PTE_COW;
 #endif
 
 #ifndef UB_ON_WRITE
@@ -52,11 +58,26 @@ int AddressSpace::DuplicateTo(AddressSpace& dst) {
     );
 
     if (status != 0) {
-      GlobalFrameAllocator->Deallocate(that_frame);
+      // TODO: deallocate
       uvmunmap(dst.pagetable_, 0, virt / Frame::Size, 1);
+      printf("[debug] mappages failed\n");
       return -1;
     }
+
+    src_pte.setCopiedOnWrite(true);
+    src_pte.setWrittable(false);
   }
+
+// #define COW_DEBUG
+#ifdef COW_DEBUG
+  printf("[debug] Source:\n");
+  print();
+  printf("\n\n");
+
+  printf("[debug] Destination:\n");
+  dst.print();
+  printf("\n\n");
+#endif
 
   return 0;
 }

@@ -400,9 +400,37 @@ int copyout(
   while (len > 0) {
     const UInt64 virt0 = PGROUNDDOWN(dstva);
 
+    {
+      if (virt0 >= MAXVA) {
+        return -1;
+      }
+
+      pte_t* pte = translate(pagetable, virt0, 0);
+      if (pte == 0 || (*pte & PTE_U) == 0 || (*pte & PTE_V) == 0) {
+        return -1;
+      }
+
+      if (((*pte) & PTE_COW) != 0) {
+        UInt32 flags = PTE_FLAGS(*pte);
+        flags |= PTE_W;
+        flags &= ~PTE_COW;
+
+        UInt64 phys = PTE2PA(*pte);
+        char* mem = (char*)kalloc();
+        if (mem == 0) {
+          return -2;
+        }
+
+        memmove(mem, (char*)phys, PGSIZE);
+
+        *pte = PA2PTE(mem) | flags;
+
+        kfree((char*)phys);
+      }
+    }
+
     const UInt64 phys0 = walkaddr(pagetable, virt0);
     if (phys0 == 0) {
-      printf("[debug] copyout failed\n");
       return -1;
     }
 
@@ -413,19 +441,7 @@ int copyout(
       nbytes = len;
     }
 
-    if (nbytes == PGSIZE) {
-      pte_t* pte = translate(pagetable, virt0, 0);
-      const int flags = PTE_FLAGS(*pte);
-
-      uvmunmap(pagetable, virt0, /*npages: */ 1, /*do_free: */ 1);
-
-      GlobalFrameAllocatorReference(src);
-      mappages(pagetable, virt0, PGSIZE, (UInt64)src, flags);
-
-      *pte &= ~PTE_W;
-    } else {
-      memmove((void*)(phys0 + shift), src, nbytes);
-    }
+    memmove((void*)(phys0 + shift), src, nbytes);
 
     len -= nbytes;
     src += nbytes;
@@ -448,14 +464,17 @@ int copyin(
 
   while (len > 0) {
     virt0 = PGROUNDDOWN(srcva);
+
     phys0 = walkaddr(pagetable, virt0);
     if (phys0 == 0) {
       return -1;
     }
+
     n = PGSIZE - (srcva - virt0);
     if (n > len) {
       n = len;
     }
+
     memmove(dst, (void*)(phys0 + (srcva - virt0)), n);
 
     len -= n;

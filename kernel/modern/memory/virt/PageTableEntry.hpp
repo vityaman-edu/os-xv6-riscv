@@ -16,15 +16,15 @@ class PageTableEntry {
   }
 
   /// @return true only if present
-  bool isValid() const {
+  [[nodiscard]] bool isValid() const {
     return ((*ptr_) & PTE_V) != 0;
   }
 
-  bool isReadable() const {
+  [[nodiscard]] bool isReadable() const {
     return ((*ptr_) & PTE_R) != 0;
   }
 
-  bool isWrittable() const {
+  [[nodiscard]] bool isWrittable() const {
     return ((*ptr_) & PTE_W) != 0;
   }
 
@@ -36,19 +36,31 @@ class PageTableEntry {
     }
   }
 
-  bool isExecutable() const {
+  [[nodiscard]] bool isExecutable() const {
     return ((*ptr_) & PTE_X) != 0;
   }
 
-  bool isUserAccesible() const {
+  [[nodiscard]] bool isUserAccesible() const {
     return ((*ptr_) & PTE_U) != 0;
   }
 
-  Phys physical() const {
+  [[nodiscard]] bool isCopiedOnWrite() const {
+    return ((*ptr_) & PTE_COW) != 0;
+  }
+
+  void setCopiedOnWrite(bool status) const {
+    if (status) {
+      (*ptr_) |= PTE_COW;
+    } else {
+      (*ptr_) &= ~PTE_COW;
+    }
+  }
+
+  [[nodiscard]] Phys physical() const {
     return Phys::unsafeFrom(PTE2PA(*ptr_));
   }
 
-  Frame frame() const {
+  [[nodiscard]] Frame frame() const {
     return Frame(physical());
   }
 
@@ -57,7 +69,7 @@ class PageTableEntry {
     (*ptr_) = 0x0 | PA2PTE(phys) | flags();
   }
 
-  int flags() const {
+  [[nodiscard]] int flags() const {
     return PTE_FLAGS(*ptr_);
   }
 
@@ -67,8 +79,9 @@ class PageTableEntry {
     const auto* w = isWrittable() ? "W" : " ";
     const auto* e = isExecutable() ? "X" : " ";
     const auto* u = isUserAccesible() ? "U" : " ";
+    const auto* c = isCopiedOnWrite() ? "C" : " ";
     const auto p = physical().ptr();
-    printf("PTE |%s%s%s%s%s| %p", v, r, w, e, u, p);
+    printf("PTE |%s%s%s%s%s%s| %p", v, r, w, e, u, c, p);
   }
 
   PageTableEntry(const PageTableEntry&) = default;

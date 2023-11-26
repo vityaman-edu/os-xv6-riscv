@@ -32,6 +32,9 @@ class Frage {
   }
 
   [[nodiscard]] std::size_t index() const {
+    if (begin_.toInt() < KERNBASE) {
+      Panic("[debug] can't calculate index");
+    }
     return (begin_.toInt() - KERNBASE) / Size;
   }
 
