@@ -46,8 +46,12 @@ void FrameAllocator::Deallocate(Frame frame) {
 void FrameAllocator::Reference(Frame frame) {
   auto guard = _lock.lock();
 
-  (void)frame;
-  library::error::Panic("Not implemented");
+  auto& info = _info[frame.index()];
+  if (info.isFree()) {
+    Panic("Tried to reference a free frame");
+  }
+
+  info.references_count += 1;
 }
 
 FrameAllocator* GlobalFrameAllocator = nullptr;
