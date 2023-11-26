@@ -1,7 +1,7 @@
 #pragma once
 
-// #define UB_ON_WRITE
-// #define FAULT_ON_WRITE
+#define UB_ON_WRITE
+#define FAULT_ON_WRITE
 
 #include <algorithm>
 #include <cstddef>
