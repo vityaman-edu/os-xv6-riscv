@@ -2,35 +2,35 @@ K=kernel
 U=user
 
 OBJS = \
-  $K/entry.o \
-  $K/start.o \
-  $K/console.o \
-  $K/printf.o \
-  $K/uart.o \
-  $K/kalloc.o \
-  $K/spinlock.o \
-  $K/string.o \
-  $K/main.o \
-  $K/vm.o \
-  $K/proc.o \
-  $K/swtch.o \
-  $K/trampoline.o \
-  $K/trap.o \
-  $K/syscall.o \
-  $K/sysproc.o \
-  $K/bio.o \
-  $K/fs.o \
-  $K/log.o \
-  $K/sleeplock.o \
-  $K/file.o \
-  $K/pipe.o \
-  $K/exec.o \
-  $K/sysfile.o \
-  $K/kernelvec.o \
-  $K/plic.o \
-  $K/virtio_disk.o\
-  $K/list.o\
-  $K/buddy.o\
+  $K/legacy/entry.o \
+  $K/legacy/start.o \
+  $K/legacy/console.o \
+  $K/legacy/printf.o \
+  $K/legacy/uart.o \
+  $K/legacy/kalloc.o \
+  $K/legacy/spinlock.o \
+  $K/legacy/string.o \
+  $K/legacy/main.o \
+  $K/legacy/vm.o \
+  $K/legacy/proc.o \
+  $K/legacy/swtch.o \
+  $K/legacy/trampoline.o \
+  $K/legacy/trap.o \
+  $K/legacy/syscall.o \
+  $K/legacy/sysproc.o \
+  $K/legacy/bio.o \
+  $K/legacy/fs.o \
+  $K/legacy/log.o \
+  $K/legacy/sleeplock.o \
+  $K/legacy/file.o \
+  $K/legacy/pipe.o \
+  $K/legacy/exec.o \
+  $K/legacy/sysfile.o \
+  $K/legacy/kernelvec.o \
+  $K/legacy/plic.o \
+  $K/legacy/virtio_disk.o\
+  $K/legacy/list.o\
+  $K/legacy/buddy.o\
 	$K/cxxstd/malloc.o\
 	$K/cxxstd/test.o\
 	$K/modern/Bridge.o\
@@ -96,9 +96,9 @@ endif
 
 LDFLAGS = -z max-page-size=4096
 
-$K/kernel: $(OBJS) $K/kernel.ld $U/initcode
-	$(LD) $(LDFLAGS) -T $K/kernel.ld -o $K/kernel $(OBJS) 
-	$(OBJDUMP) -S $K/kernel > $K/kernel.asm
+$K/kernel: $(OBJS) $K/legacy/kernel.ld $U/initcode
+	$(LD) $(LDFLAGS) -T $K/legacy/kernel.ld -o $K/kernel $(OBJS) 
+	$(OBJDUMP) -S $K/kernel > $K/legacy/kernel.asm
 	$(OBJDUMP) -t $K/kernel | sed '1,/SYMBOL TABLE/d; s/ .* / /; /^$$/d' > $K/kernel.sym
 
 $U/initcode: $U/initcode.S
@@ -129,17 +129,17 @@ $U/_forktest: $U/forktest.o $(ULIB)
 	$(LD) $(LDFLAGS) -N -e main -Ttext 0 -o $U/_forktest $U/forktest.o $U/ulib.o $U/usys.o
 	$(OBJDUMP) -S $U/_forktest > $U/forktest.asm
 
-$U/dumptests.o: $U/dumptests.S $U/dumptests.c $K/syscall.h
+$U/dumptests.o: $U/dumptests.S $U/dumptests.c $K/legacy/syscall.h
 	$(CC) $(CFLAGS) -c -o $U/dumptests.s.o $U/dumptests.S
 	$(CC) $(CFLAGS) -c -o $U/dumptests.c.o $U/dumptests.c
 	$(LD) -r $U/dumptests.c.o $U/dumptests.s.o -o $U/dumptests.o
 
-$U/dump2tests.o: $U/dump2tests.S $U/dump2tests.c $K/syscall.h
+$U/dump2tests.o: $U/dump2tests.S $U/dump2tests.c $K/legacy/syscall.h
 	$(CC) $(CFLAGS) -c -o $U/dump2tests.s.o $U/dump2tests.S
 	$(CC) $(CFLAGS) -c -o $U/dump2tests.c.o $U/dump2tests.c
 	$(LD) -r $U/dump2tests.c.o $U/dump2tests.s.o -o $U/dump2tests.o
 
-mkfs/mkfs: mkfs/mkfs.c $K/fs.h $K/param.h
+mkfs/mkfs: mkfs/mkfs.c $K/legacy/fs.h $K/legacy/param.h
 	gcc -Werror -Wall -I. -o mkfs/mkfs mkfs/mkfs.c
 
 # Prevent deletion of intermediate files, e.g. cat.o, after first build, so

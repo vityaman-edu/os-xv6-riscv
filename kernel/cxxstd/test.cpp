@@ -6,7 +6,7 @@
 
 extern "C" {
 #include <kernel/cxxstd/test.h>
-#include <kernel/defs.h>
+#include <kernel/legacy/defs.h>
 }
 
 namespace xv6::cxxstd::test {

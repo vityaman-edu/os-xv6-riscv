@@ -1,4 +1,4 @@
-#include "kernel/syscall.h"
+#include "kernel/legacy/syscall.h"
 
 .globl dump_test2_asm
 dump_test2_asm:

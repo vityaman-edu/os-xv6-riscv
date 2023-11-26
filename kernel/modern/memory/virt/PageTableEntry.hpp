@@ -3,9 +3,9 @@
 #include "kernel/modern/memory/Address.hpp"
 
 extern "C" {
-#include <kernel/riscv.h>
-#include <kernel/defs.h>
-#include <kernel/types.h>
+#include <kernel/legacy/riscv.h>
+#include <kernel/legacy/defs.h>
+#include "kernel/legacy/types.h"
 }
 
 namespace xv6::kernel::memory::virt {

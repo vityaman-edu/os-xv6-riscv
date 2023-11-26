@@ -4,7 +4,7 @@
 #include <kernel/modern/library/error/Panic.hpp>
 
 extern "C" {
-#include <kernel/defs.h>
+#include <kernel/legacy/defs.h>
 }
 
 namespace xv6::kernel::memory::allocator {
