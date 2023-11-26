@@ -17,7 +17,7 @@ FrameAllocator::FrameAllocator()
 std::optional<Frame> FrameAllocator::Allocate() {
   auto guard = _lock.lock();
 
-  auto* const ptr = kalloc();
+  auto* const ptr = bd_malloc(Frame::Size);
   if (ptr == nullptr) {
     return std::nullopt;
   }
@@ -40,7 +40,7 @@ void FrameAllocator::Deallocate(Frame frame) {
     return;
   }
 
-  kfree(frame.begin().ptr());
+  bd_free(frame.begin().ptr());
 }
 
 void FrameAllocator::Reference(Frame frame) {
