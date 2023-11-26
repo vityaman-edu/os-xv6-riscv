@@ -4,6 +4,10 @@
 #include "MemoryTag.hpp"
 #include <kernel/modern/library/error/Panic.hpp>
 
+extern "C" {
+#include <kernel/legacy/memlayout.h>
+}
+
 namespace xv6::kernel::memory {
 
 using library::error::Panic;
@@ -28,7 +32,7 @@ class Frage {
   }
 
   [[nodiscard]] std::size_t index() const {
-    return begin_.toInt() / Size;
+    return (begin_.toInt() - KERNBASE) / Size;
   }
 
   static Frage containing(Addr<tag> addr) {

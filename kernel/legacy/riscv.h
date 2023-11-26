@@ -1,5 +1,9 @@
 #ifndef __ASSEMBLER__
 
+#pragma once
+
+#include "types.h"
+
 // which hart (core) is this?
 static inline UInt64
 r_mhartid()
@@ -361,3 +365,5 @@ typedef UInt64 *pagetable_t; // 512 PTEs
 // Sv39, to avoid having to sign-extend virtual addresses
 // that have the high bit set.
 #define MAXVA (1L << (9 + 9 + 9 + 12 - 1))
+
+#define SCAUSE_PAGE_FAULT 0x0F

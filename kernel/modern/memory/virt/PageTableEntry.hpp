@@ -15,6 +15,7 @@ class PageTableEntry {
   explicit PageTableEntry(pte_t* const ptr) : ptr_(ptr) {
   }
 
+  /// @return true only if present
   bool isValid() const {
     return ((*ptr_) & PTE_V) != 0;
   }
@@ -27,6 +28,14 @@ class PageTableEntry {
     return ((*ptr_) & PTE_W) != 0;
   }
 
+  void setWrittable(bool status) {
+    if (status) {
+      (*ptr_) = (*ptr_) | PTE_W;
+    } else {
+      (*ptr_) = (*ptr_) & ~PTE_W;
+    }
+  }
+
   bool isExecutable() const {
     return ((*ptr_) & PTE_X) != 0;
   }
@@ -36,11 +45,16 @@ class PageTableEntry {
   }
 
   Phys physical() const {
-    return Phys(PTE2PA(*ptr_));
+    return Phys::unsafeFrom(PTE2PA(*ptr_));
   }
 
   Frame frame() const {
     return Frame(physical());
+  }
+
+  void setFrame(Frame frame) {
+    auto phys = frame.begin().toInt();
+    (*ptr_) = 0x0 | PA2PTE(phys) | flags();
   }
 
   int flags() const {

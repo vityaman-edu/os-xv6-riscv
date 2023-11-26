@@ -34,6 +34,7 @@ OBJS = \
 	$K/cxxstd/malloc.o\
 	$K/cxxstd/test.o\
 	$K/modern/Bridge.o\
+	$K/modern/memory/Address.o\
 	$K/modern/library/error/Panic.o\
 	$K/modern/library/sync/Spinlock.o\
 	$K/modern/memory/allocator/FrameAllocator.o\
@@ -99,7 +100,7 @@ LDFLAGS = -z max-page-size=4096
 
 $K/kernel: $(OBJS) $K/legacy/kernel.ld $U/initcode
 	$(LD) $(LDFLAGS) -T $K/legacy/kernel.ld -o $K/kernel $(OBJS) 
-	$(OBJDUMP) -S $K/kernel > $K/legacy/kernel.asm
+	$(OBJDUMP) -S $K/kernel > $K/kernel.asm
 	$(OBJDUMP) -t $K/kernel | sed '1,/SYMBOL TABLE/d; s/ .* / /; /^$$/d' > $K/kernel.sym
 
 $U/initcode: $U/initcode.S

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstddef>
 #include <optional>
 #include <array>
 
@@ -17,12 +18,12 @@ using library::sync::Spinlock;
 class FrameAllocator {
  private:
   static constexpr std::size_t MAX_FRAMES_COUNT
-      = PHYSTOP / Frame::Size + 1;
+      = (PHYSTOP - KERNBASE) / Frame::Size + 4;
 
   struct FrameInfo {
-    std::size_t references_count = 0;
+    std::uint16_t references_count = 0;
 
-    bool isFree() const {
+    [[nodiscard]] bool isFree() const {
       return references_count == 0;
     }
   };
@@ -33,6 +34,8 @@ class FrameAllocator {
   std::optional<Frame> Allocate();
   void Deallocate(Frame frame);
   void Reference(Frame frame);
+  std::size_t ReferencesCount(Frame frame);
+  void Print();
 
  private:
   std::array<FrameInfo, MAX_FRAMES_COUNT> _info;

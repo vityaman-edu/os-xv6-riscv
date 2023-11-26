@@ -1,7 +1,7 @@
 #pragma once
 
-// #define UB_ON_WRITE
-// #define FAULT_ON_WRITE
+#define UB_ON_WRITE
+#define FAULT_ON_WRITE
 
 #include <algorithm>
 #include <cstddef>
@@ -24,7 +24,7 @@ using library::math::DigitsCount;
 
 class AddressSpace {
   static constexpr std::size_t kPageTableSize = 512;
-  static constexpr std::size_t kLeafLevel = 3;
+  static constexpr std::size_t kLeafLevel = 2;
 
  public:
   explicit AddressSpace(pagetable_t pagetable, std::size_t size)
@@ -37,7 +37,7 @@ class AddressSpace {
 
   int CopyTo(AddressSpace& dst) {
     for (UInt64 virt = 0; virt < size_; virt += Page::Size) {
-      const auto maybe_pte = TranslateExisting(Virt(virt));
+      const auto maybe_pte = TranslateExisting(Virt::unsafeFrom(virt));
       if (!maybe_pte.has_value()) {
         Panic("uvmcopy: pte should exist");
       }
@@ -69,6 +69,7 @@ class AddressSpace {
           Frame::Size
       );
 #else
+      GlobalFrameAllocator->Reference(this_frame);
       const auto that_frame = this_frame;
 #endif
 
