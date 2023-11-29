@@ -1,5 +1,5 @@
 CompileFlags:
-  Add: [-Wall]
+  Add: [-Wall, -Wextra, -pedantic]
   Compiler: clang
 
 Diagnostics:
@@ -16,7 +16,6 @@ Diagnostics:
       llvmlibc-implementation-in-namespace,
 
       cppcoreguidelines-avoid-non-const-global-variables,
-      
     ]
 
 InlayHints:
