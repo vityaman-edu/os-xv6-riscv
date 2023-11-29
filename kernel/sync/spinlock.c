@@ -8,15 +8,15 @@
 #include <kernel/process/proc.h>
 #include <kernel/sync/spinlock.h>
 
-void initlock(struct spinlock* lk, char* name) {
-  lk->name = name;
-  lk->locked = 0;
-  lk->cpu = 0;
+void initlock(struct spinlock* lock, char* name) {
+  lock->name = name;
+  lock->locked = 0;
+  lock->cpu = 0;
 }
 
-void acquire(struct spinlock* lk) {
+void acquire(struct spinlock* lock) {
   push_off(); // disable interrupts to avoid deadlock.
-  if (holding(lk)) {
+  if (holding(lock)) {
     panic("acquire");
   }
 
@@ -24,8 +24,18 @@ void acquire(struct spinlock* lk) {
   //   a5 = 1
   //   s1 = &lk->locked
   //   amoswap.w.aq a5, a5, (s1)
-  while (__sync_lock_test_and_set(&lk->locked, 1) != 0) {
-    // Do nothing
+  uint64 try = 0;
+  const uint64 limit = 1000000;
+  while (__sync_lock_test_and_set(&lock->locked, 1) != 0) {
+    try += 1;
+    if (try > limit) {
+      try = 0;
+      printf(
+          "[warn] possible deadlock on '%s' acquired by %d\n",
+          lock->name,
+          lock->cpu->proc->pid
+      );
+    }
   }
 
   // Tell the C compiler and the processor to not move loads or stores
@@ -35,7 +45,7 @@ void acquire(struct spinlock* lk) {
   __sync_synchronize();
 
   // Record info about lock acquisition for holding() and debugging.
-  lk->cpu = mycpu();
+  lock->cpu = mycpu();
 }
 
 // Release the lock.

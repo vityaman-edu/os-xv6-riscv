@@ -55,7 +55,6 @@ void initlog(int dev, struct superblock* sb) {
   if (sizeof(struct logheader) >= BSIZE) {
     panic("initlog: too big logheader");
   }
-
   initlock(&log.lock, "log");
   log.start = sb->logstart;
   log.size = sb->nlog;
@@ -65,9 +64,7 @@ void initlog(int dev, struct superblock* sb) {
 
 // Copy committed blocks from log to their home location
 static void install_trans(int recovering) {
-  int tail;
-
-  for (tail = 0; tail < log.lh.n; tail++) {
+  for (int tail = 0; tail < log.lh.n; tail++) {
     struct buf* lbuf = bread(log.dev, log.start + tail + 1); // read log block
     struct buf* dbuf = bread(log.dev, log.lh.block[tail]);   // read dst
     memmove(dbuf->data, lbuf->data, BSIZE); // copy block to dst
@@ -84,9 +81,8 @@ static void install_trans(int recovering) {
 static void read_head(void) {
   struct buf* buf = bread(log.dev, log.start);
   struct logheader* lh = (struct logheader*)(buf->data);
-  int i;
   log.lh.n = lh->n;
-  for (i = 0; i < log.lh.n; i++) {
+  for (int i = 0; i < log.lh.n; i++) {
     log.lh.block[i] = lh->block[i];
   }
   brelse(buf);
@@ -98,9 +94,8 @@ static void read_head(void) {
 static void write_head(void) {
   struct buf* buf = bread(log.dev, log.start);
   struct logheader* hb = (struct logheader*)(buf->data);
-  int i;
   hb->n = log.lh.n;
-  for (i = 0; i < log.lh.n; i++) {
+  for (int i = 0; i < log.lh.n; i++) {
     hb->block[i] = log.lh.block[i];
   }
   bwrite(buf);
@@ -165,9 +160,7 @@ void end_op(void) {
 
 // Copy modified blocks from cache to log.
 static void write_log(void) {
-  int tail;
-
-  for (tail = 0; tail < log.lh.n; tail++) {
+  for (int tail = 0; tail < log.lh.n; tail++) {
     struct buf* to = bread(log.dev, log.start + tail + 1); // log block
     struct buf* from = bread(log.dev, log.lh.block[tail]); // cache block
     memmove(to->data, from->data, BSIZE);
@@ -208,8 +201,9 @@ void log_write(struct buf* b) {
   }
 
   for (i = 0; i < log.lh.n; i++) {
-    if (log.lh.block[i] == b->blockno) // log absorption
+    if (log.lh.block[i] == b->blockno) { // log absorption
       break;
+    }
   }
   log.lh.block[i] = b->blockno;
   if (i == log.lh.n) { // Add new block to log?

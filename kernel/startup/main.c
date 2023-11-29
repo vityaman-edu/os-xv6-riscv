@@ -6,37 +6,85 @@
 
 volatile static int started = 0;
 
+void show_greeting() {
+  printf("\n");
+  printf("+--------------------------+\n");
+  printf("| Welcome to XV6 OS!       |\n");
+  printf("| Edited by @vityaman.     |\n");
+  printf("+--------------------------+\n");
+  printf("\n");
+}
+
 // start() jumps here in supervisor mode on all CPUs.
 void main() {
   if (cpuid() == 0) {
     consoleinit();
     printfinit();
-    printf("\n");
-    printf("xv6 kernel is booting\n");
-    printf("\n");
-    kinit();            // physical page allocator
-    kvminit();          // create kernel page table
-    kvminithart();      // turn on paging
-    procinit();         // process table
-    trapinit();         // trap vectors
-    trapinithart();     // install kernel trap vector
-    plicinit();         // set up interrupt controller
-    plicinithart();     // ask PLIC for device interrupts
-    binit();            // buffer cache
-    iinit();            // inode table
-    fileinit();         // file table
-    virtio_disk_init(); // emulated hard disk
-    userinit();         // first user process
+
+    show_greeting();
+
+    printf("[info][boot] Kernel is booting...\n");
+    printf("[info][boot] Console initialzied.\n");
+    printf("[info][boot] Printf initialized.\n");
+
+    printf("[info][boot] Initializing frame allocator...\n");
+    kinit();
+
+    printf("[info][boot] Creating kernel page table...\n");
+    kvminit();
+
+    printf("[info][boot] Turning on paging...\n");
+    kvminithart();
+
+    printf("[info][boot] Initializing proccesses...\n");
+    procinit();
+
+    printf("[info][boot] Preparing trap vectors...\n");
+    trapinit();
+
+    printf("[info][boot] Installing kernel trap vector...\n");
+    trapinithart();
+
+    printf("[info][boot] Setting up interup controller...\n");
+    plicinit();
+
+    printf("[info][boot] Asking PLIC for device interrupts...\n");
+    plicinithart();
+
+    printf("[info][boot] Initializing buffer cache...\n");
+    binit();
+
+    printf("[info][boot] Initializing inode table...\n");
+    iinit();
+
+    printf("[info][boot] Initializing file table...\n");
+    fileinit();
+
+    printf("[info][boot] Initializing emulated hard disk...\n");
+    virtio_disk_init();
+
+    printf("[info][boot] Initializing first user process...\n");
+    userinit();
+
     __sync_synchronize();
     started = 1;
+
   } else {
+
     while (started == 0) {
       // Wait, do nothing
     }
+
     __sync_synchronize();
-    printf("hart %d starting\n", cpuid());
-    kvminithart();  // turn on paging
-    trapinithart(); // install kernel trap vector
+    printf("[info][boot][cpu %d] Hart is starting...\n", cpuid());
+
+    printf("[info][boot][cpu %d] Turning on paging...\n", cpuid());
+    kvminithart();
+
+    printf("[info][boot][cpu %d] Installing kernel trap vector...\n", cpuid());
+    trapinithart();
+
+    printf("[info][boot][cpu %d] Asking PLIC for dev interrupts...\n", cpuid());
     plicinithart(); // ask PLIC for device interrupts
   }
 
