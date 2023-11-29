@@ -12,5 +12,5 @@ else
 fi 
 
 echo "[xv6] Running XV6 OS..."
-bear -- make $TARGET && make clean
+bear -- make $TARGET && make clean && clear
 echo "[xv6] Done!"

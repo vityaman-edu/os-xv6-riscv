@@ -3,6 +3,7 @@
 #include <kernel/defs.h>
 #include <kernel/hardware/memlayout.h>
 #include <kernel/hardware/riscv.h>
+#include <kernel/memory/vm.h>
 #include <kernel/process/proc.h>
 #include <kernel/sync/spinlock.h>
 #include <kernel/syscall/syscall.h>
@@ -15,7 +16,7 @@ int fetchaddr(uint64 addr, uint64* ip) {
              > p->sz) { // both tests needed, in case of overflow
     return -1;
   }
-  if (copyin(p->pagetable, (char*)ip, addr, sizeof(*ip)) != 0) {
+  if (vmcopyin(p->pagetable, (char*)ip, addr, sizeof(*ip)) != 0) {
     return -1;
   }
   return 0;
@@ -25,7 +26,7 @@ int fetchaddr(uint64 addr, uint64* ip) {
 // Returns length of string, not including nul, or -1 for error.
 int fetchstr(uint64 addr, char* buf, int max) {
   struct proc* p = myproc();
-  if (copyinstr(p->pagetable, buf, addr, max) < 0) {
+  if (vmcopyinstr(p->pagetable, buf, addr, max) < 0) {
     return -1;
   }
   return strlen(buf);

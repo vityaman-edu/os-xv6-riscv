@@ -16,5 +16,3 @@ typedef int bool;
 #define false 0
 
 #define nullptr 0
-
-typedef uint64 pde_t;

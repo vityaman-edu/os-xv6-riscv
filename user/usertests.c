@@ -8,6 +8,7 @@
 #include "kernel/hardware/memlayout.h"
 #include "kernel/hardware/riscv.h"
 #include "kernel/file/fcntl.h"
+#include "kernel/memory/vm.h"
 
 //
 // Tests xv6 system calls.  usertests without arguments runs them all

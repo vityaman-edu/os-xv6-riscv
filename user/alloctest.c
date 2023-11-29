@@ -6,6 +6,7 @@
 #include "kernel/hardware/memlayout.h"
 #include "user/user.h"
 #include "kernel/file/fcntl.h"
+#include "kernel/memory/vm.h"
 
 void test0() {
   enum { NCHILD = 50, NFD = 10 };

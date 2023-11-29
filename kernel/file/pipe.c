@@ -4,6 +4,7 @@
 #include <kernel/file/file.h>
 #include <kernel/file/fs.h>
 #include <kernel/hardware/riscv.h>
+#include <kernel/memory/vm.h>
 #include <kernel/process/proc.h>
 #include <kernel/sync/sleeplock.h>
 #include <kernel/sync/spinlock.h>
@@ -102,7 +103,7 @@ int pipewrite(struct pipe* pi, uint64 addr, int n) {
       sleep(&pi->nwrite, &pi->lock);
     } else {
       char ch;
-      if (copyin(pr->pagetable, &ch, addr + i, 1) == -1) {
+      if (vmcopyin(pr->pagetable, &ch, addr + i, 1) == -1) {
         break;
       }
       pi->data[pi->nwrite++ % PIPESIZE] = ch;
@@ -133,7 +134,7 @@ int piperead(struct pipe* pi, uint64 addr, int n) {
       break;
     }
     ch = pi->data[pi->nread++ % PIPESIZE];
-    if (copyout(pr->pagetable, addr + i, &ch, 1) == -1) {
+    if (vmcopyout(pr->pagetable, addr + i, &ch, 1) == -1) {
       break;
     }
   }

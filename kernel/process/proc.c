@@ -3,6 +3,7 @@
 #include <kernel/defs.h>
 #include <kernel/hardware/memlayout.h>
 #include <kernel/hardware/riscv.h>
+#include <kernel/memory/vm.h>
 #include <kernel/process/proc.h>
 #include <kernel/sync/spinlock.h>
 
@@ -173,7 +174,7 @@ pagetable_t proc_pagetable(struct proc* p) {
   // at the highest user virtual address.
   // only the supervisor uses it, on the way
   // to/from user space, so not PTE_U.
-  if (mappages(pagetable, TRAMPOLINE, PGSIZE, (uint64)trampoline, PTE_R | PTE_X)
+  if (vmmappages(pagetable, TRAMPOLINE, PGSIZE, (uint64)trampoline, PTE_R | PTE_X)
       < 0) {
     uvmfree(pagetable, 0);
     return 0;
@@ -181,7 +182,7 @@ pagetable_t proc_pagetable(struct proc* p) {
 
   // map the trapframe page just below the trampoline page, for
   // trampoline.S.
-  if (mappages(
+  if (vmmappages(
           pagetable, TRAPFRAME, PGSIZE, (uint64)(p->trapframe), PTE_R | PTE_W
       )
       < 0) {
@@ -383,7 +384,7 @@ int wait(uint64 addr) {
           // Found one.
           pid = pp->pid;
           if (addr != 0
-              && copyout(
+              && vmcopyout(
                      p->pagetable, addr, (char*)&pp->xstate, sizeof(pp->xstate)
                  ) < 0) {
             release(&pp->lock);
@@ -591,7 +592,7 @@ int killed(struct proc* p) {
 int either_copyout(int user_dst, uint64 dst, void* src, uint64 len) {
   struct proc* p = myproc();
   if (user_dst) {
-    return copyout(p->pagetable, dst, src, len);
+    return vmcopyout(p->pagetable, dst, src, len);
   }
   memmove((char*)dst, src, len);
   return 0;
@@ -603,7 +604,7 @@ int either_copyout(int user_dst, uint64 dst, void* src, uint64 len) {
 int either_copyin(void* dst, int user_src, uint64 src, uint64 len) {
   struct proc* p = myproc();
   if (user_src) {
-    return copyin(p->pagetable, dst, src, len);
+    return vmcopyin(p->pagetable, dst, src, len);
   }
   memmove(dst, (char*)src, len);
   return 0;

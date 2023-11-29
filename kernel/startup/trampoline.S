@@ -11,6 +11,7 @@
 #
 
 #include "../hardware/riscv.h"
+#include "../memory/vm.h"
 #include "../hardware/memlayout.h"
 
 .section trampsec

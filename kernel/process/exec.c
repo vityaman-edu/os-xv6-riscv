@@ -109,7 +109,7 @@ int exec(char* path, char** argv) {
     if (sp < stackbase) {
       goto bad;
     }
-    if (copyout(pagetable, sp, argv[argc], strlen(argv[argc]) + 1) < 0) {
+    if (vmcopyout(pagetable, sp, argv[argc], strlen(argv[argc]) + 1) < 0) {
       goto bad;
     }
     ustack[argc] = sp;
@@ -122,7 +122,7 @@ int exec(char* path, char** argv) {
   if (sp < stackbase) {
     goto bad;
   }
-  if (copyout(pagetable, sp, (char*)ustack, (argc + 1) * sizeof(uint64)) < 0) {
+  if (vmcopyout(pagetable, sp, (char*)ustack, (argc + 1) * sizeof(uint64)) < 0) {
     goto bad;
   }
 
@@ -171,7 +171,7 @@ static int loadseg(
   uint64 pa;
 
   for (i = 0; i < sz; i += PGSIZE) {
-    pa = walkaddr(pagetable, va + i);
+    pa = vmwalkaddr(pagetable, va + i);
     if (pa == 0) {
       panic("loadseg: address should exist");
     }

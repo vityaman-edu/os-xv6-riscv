@@ -5,6 +5,7 @@
 #include <kernel/hardware/memlayout.h>
 #include <kernel/hardware/riscv.h>
 #include <kernel/process/elf.h>
+#include <kernel/memory/vm.h>
 
 /*
  * the kernel's page table.
@@ -81,7 +82,7 @@ void kvminithart() {
 //   21..29 -- 9 bits of level-1 index.
 //   12..20 -- 9 bits of level-0 index.
 //    0..11 -- 12 bits of byte offset within the page.
-pte_t* walk(pagetable_t pagetable, uint64 va, int alloc) {
+pte_t* vmwalk(pagetable_t pagetable, uint64 va, int alloc) {
   if (va >= MAXVA) {
     panic("walk");
   }
@@ -104,7 +105,7 @@ pte_t* walk(pagetable_t pagetable, uint64 va, int alloc) {
 // Look up a virtual address, return the physical address,
 // or 0 if not mapped.
 // Can only be used to look up user pages.
-uint64 walkaddr(pagetable_t pagetable, uint64 va) {
+uint64 vmwalkaddr(pagetable_t pagetable, uint64 va) {
   pte_t* pte;
   uint64 pa;
 
@@ -112,7 +113,7 @@ uint64 walkaddr(pagetable_t pagetable, uint64 va) {
     return 0;
   }
 
-  pte = walk(pagetable, va, 0);
+  pte = vmwalk(pagetable, va, 0);
   if (pte == 0) {
     return 0;
   }
@@ -130,7 +131,7 @@ uint64 walkaddr(pagetable_t pagetable, uint64 va) {
 // only used when booting.
 // does not flush TLB or enable paging.
 void kvmmap(pagetable_t kpgtbl, uint64 va, uint64 pa, uint64 sz, int perm) {
-  if (mappages(kpgtbl, va, sz, pa, perm) != 0) {
+  if (vmmappages(kpgtbl, va, sz, pa, perm) != 0) {
     panic("kvmmap");
   }
 }
@@ -139,7 +140,7 @@ void kvmmap(pagetable_t kpgtbl, uint64 va, uint64 pa, uint64 sz, int perm) {
 // physical addresses starting at pa. va and size might not
 // be page-aligned. Returns 0 on success, -1 if walk() couldn't
 // allocate a needed page-table page.
-int mappages(
+int vmmappages(
     pagetable_t pagetable, uint64 va, uint64 size, uint64 pa, int perm
 ) {
   uint64 a, last;
@@ -152,7 +153,7 @@ int mappages(
   a = PGROUNDDOWN(va);
   last = PGROUNDDOWN(va + size - 1);
   for (;;) {
-    if ((pte = walk(pagetable, a, 1)) == 0) {
+    if ((pte = vmwalk(pagetable, a, 1)) == 0) {
       return -1;
     }
     if (*pte & PTE_V) {
@@ -180,7 +181,7 @@ void uvmunmap(pagetable_t pagetable, uint64 va, uint64 npages, int do_free) {
   }
 
   for (a = va; a < va + npages * PGSIZE; a += PGSIZE) {
-    if ((pte = walk(pagetable, a, 0)) == 0) {
+    if ((pte = vmwalk(pagetable, a, 0)) == 0) {
       panic("uvmunmap: walk");
     }
     if ((*pte & PTE_V) == 0) {
@@ -219,7 +220,7 @@ void uvmfirst(pagetable_t pagetable, uchar* src, uint sz) {
   }
   mem = kalloc();
   memset(mem, 0, PGSIZE);
-  mappages(pagetable, 0, PGSIZE, (uint64)mem, PTE_W | PTE_R | PTE_X | PTE_U);
+  vmmappages(pagetable, 0, PGSIZE, (uint64)mem, PTE_W | PTE_R | PTE_X | PTE_U);
   memmove(mem, src, sz);
 }
 
@@ -241,7 +242,7 @@ uint64 uvmalloc(pagetable_t pagetable, uint64 oldsz, uint64 newsz, int xperm) {
       return 0;
     }
     memset(mem, 0, PGSIZE);
-    if (mappages(pagetable, a, PGSIZE, (uint64)mem, PTE_R | PTE_U | xperm)
+    if (vmmappages(pagetable, a, PGSIZE, (uint64)mem, PTE_R | PTE_U | xperm)
         != 0) {
       kfree(mem);
       uvmdealloc(pagetable, a, oldsz);
@@ -308,7 +309,7 @@ int uvmcopy(pagetable_t old, pagetable_t new, uint64 sz) {
   char* mem;
 
   for (i = 0; i < sz; i += PGSIZE) {
-    if ((pte = walk(old, i, 0)) == 0) {
+    if ((pte = vmwalk(old, i, 0)) == 0) {
       panic("uvmcopy: pte should exist");
     }
     if ((*pte & PTE_V) == 0) {
@@ -320,7 +321,7 @@ int uvmcopy(pagetable_t old, pagetable_t new, uint64 sz) {
       goto err;
     }
     memmove(mem, (char*)pa, PGSIZE);
-    if (mappages(new, i, PGSIZE, (uint64)mem, flags) != 0) {
+    if (vmmappages(new, i, PGSIZE, (uint64)mem, flags) != 0) {
       kfree(mem);
       goto err;
     }
@@ -337,7 +338,7 @@ err:
 void uvmclear(pagetable_t pagetable, uint64 va) {
   pte_t* pte;
 
-  pte = walk(pagetable, va, 0);
+  pte = vmwalk(pagetable, va, 0);
   if (pte == 0) {
     panic("uvmclear");
   }
@@ -347,12 +348,12 @@ void uvmclear(pagetable_t pagetable, uint64 va) {
 // Copy from kernel to user.
 // Copy len bytes from src to virtual address dstva in a given page table.
 // Return 0 on success, -1 on error.
-int copyout(pagetable_t pagetable, uint64 dstva, char* src, uint64 len) {
+int vmcopyout(pagetable_t pagetable, uint64 dstva, char* src, uint64 len) {
   uint64 n, va0, pa0;
 
   while (len > 0) {
     va0 = PGROUNDDOWN(dstva);
-    pa0 = walkaddr(pagetable, va0);
+    pa0 = vmwalkaddr(pagetable, va0);
     if (pa0 == 0) {
       return -1;
     }
@@ -372,12 +373,12 @@ int copyout(pagetable_t pagetable, uint64 dstva, char* src, uint64 len) {
 // Copy from user to kernel.
 // Copy len bytes to dst from virtual address srcva in a given page table.
 // Return 0 on success, -1 on error.
-int copyin(pagetable_t pagetable, char* dst, uint64 srcva, uint64 len) {
+int vmcopyin(pagetable_t pagetable, char* dst, uint64 srcva, uint64 len) {
   uint64 n, va0, pa0;
 
   while (len > 0) {
     va0 = PGROUNDDOWN(srcva);
-    pa0 = walkaddr(pagetable, va0);
+    pa0 = vmwalkaddr(pagetable, va0);
     if (pa0 == 0) {
       return -1;
     }
@@ -398,13 +399,13 @@ int copyin(pagetable_t pagetable, char* dst, uint64 srcva, uint64 len) {
 // Copy bytes to dst from virtual address srcva in a given page table,
 // until a '\0', or max.
 // Return 0 on success, -1 on error.
-int copyinstr(pagetable_t pagetable, char* dst, uint64 srcva, uint64 max) {
+int vmcopyinstr(pagetable_t pagetable, char* dst, uint64 srcva, uint64 max) {
   uint64 n, va0, pa0;
   int got_null = 0;
 
   while (got_null == 0 && max > 0) {
     va0 = PGROUNDDOWN(srcva);
-    pa0 = walkaddr(pagetable, va0);
+    pa0 = vmwalkaddr(pagetable, va0);
     if (pa0 == 0) {
       return -1;
     }

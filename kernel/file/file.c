@@ -93,7 +93,7 @@ int filestat(struct file* file, uint64 addr) {
 
     iunlock(file->ip);
 
-    int status = copyout(proc->pagetable, addr, (char*)&stat, sizeof(stat));
+    int status = vmcopyout(proc->pagetable, addr, (char*)&stat, sizeof(stat));
     if (status < 0) {
       return -1;
     }
