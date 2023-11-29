@@ -1,5 +1,7 @@
-#include "kernel/core/type.h"
-#include "kernel/hardware/riscv.h"
+#pragma once
+
+#include <kernel/core/type.h>
+#include <kernel/hardware/riscv.h>
 
 struct buf;
 struct context;

@@ -1,5 +1,4 @@
-#ifndef XV6_KERNEL_FS_H
-#define XV6_KERNEL_FS_H
+#pragma once
 
 /// On-disk file system format.
 /// Both the kernel and user programs use this header file.
@@ -61,5 +60,3 @@ struct dirent {
   ushort inum;
   char name[DIRSIZ];
 };
-
-#endif // XV6_KERNEL_FS_H

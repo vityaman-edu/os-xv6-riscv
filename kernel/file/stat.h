@@ -1,5 +1,6 @@
-#ifndef XV6_KERNEL_FILE_H
-#define XV6_KERNEL_FILE_H
+#pragma once
+
+#include <kernel/core/type.h>
 
 #define T_DIR 1    // Directory
 #define T_FILE 2   // File
@@ -13,4 +14,3 @@ struct stat {
   uint64 size; // Size of file in bytes
 };
 
-#endif // XV6_KERNEL_FILE_H

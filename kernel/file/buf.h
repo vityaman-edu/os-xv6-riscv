@@ -1,3 +1,9 @@
+#pragma once
+
+#include <kernel/core/type.h>
+#include <kernel/file/fs.h>
+#include <kernel/sync/sleeplock.h>
+
 struct buf {
   int valid; // has data been read from disk?
   int disk;  // does disk "own" buf?

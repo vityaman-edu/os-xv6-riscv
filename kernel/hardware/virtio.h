@@ -1,3 +1,7 @@
+#pragma once
+
+#include <kernel/core/type.h>
+
 //
 // virtio device definitions.
 // for both the mmio interface, and virtio descriptors.

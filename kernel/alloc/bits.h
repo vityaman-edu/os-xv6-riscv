@@ -1,7 +1,6 @@
-#ifndef XV6_KERNEL_BITVEC_H
-#define XV6_KERNEL_BITVEC_H
+#pragma once
 
-#include "../core/type.h"
+#include <kernel/core/type.h>
 
 typedef struct {
   byte* as_bytes;
@@ -21,5 +20,3 @@ void bits_clear(bits bits, int index);
 void bits_switch(bits bits, int index);
 
 void bits_print(fat_bits bits);
-
-#endif // XV6_KERNEL_BITVEC_H

@@ -1,8 +1,7 @@
-#ifndef XV6_KERNEL_SLEEPLOCK_H
-#define XV6_KERNEL_SLEEPLOCK_H
+#pragma once
 
-#include "../core/type.h"
-#include "spinlock.h"
+#include <kernel/core/type.h>
+#include <kernel/sync/spinlock.h>
 
 /// Long-term locks for processes
 struct sleeplock {
@@ -21,5 +20,3 @@ void acquiresleep(struct sleeplock* lock);
 void releasesleep(struct sleeplock* lock);
 
 int holdingsleep(struct sleeplock* lock);
-
-#endif // XV6_KERNEL_SLEEPLOCK_H

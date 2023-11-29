@@ -1,7 +1,9 @@
-#include "kernel/sync/spinlock.h"
-#include "kernel/file/fs.h"
-#include "kernel/sync/sleeplock.h"
-#include "kernel/core/type.h"
+#pragma once
+
+#include <kernel/core/type.h>
+#include <kernel/file/fs.h>
+#include <kernel/sync/sleeplock.h>
+#include <kernel/sync/spinlock.h>
 
 struct file {
   enum { FD_NONE, FD_PIPE, FD_INODE, FD_DEVICE } type;

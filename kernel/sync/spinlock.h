@@ -1,7 +1,6 @@
-#ifndef XV6_KERNEL_SPINLOCK_H
-#define XV6_KERNEL_SPINLOCK_H
+#pragma once
 
-#include "../core/type.h"
+#include <kernel/core/type.h>
 
 /// Mutual exclusion lock.
 struct spinlock {
@@ -21,5 +20,3 @@ void acquire(struct spinlock* lock);
 
 /// Release the lock.
 void release(struct spinlock* lock);
-
-#endif // XV6_KERNEL_SPINLOCK_H

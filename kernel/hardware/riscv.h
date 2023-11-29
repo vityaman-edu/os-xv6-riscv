@@ -3,7 +3,7 @@
 
 #ifndef __ASSEMBLER__
 
-#include "../core/type.h"
+#include <kernel/core/type.h>
 
 // which hart (core) is this?
 static inline uint64 r_mhartid() {
