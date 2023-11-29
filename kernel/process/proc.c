@@ -388,7 +388,7 @@ int wait(uint64 addr) {
           release(&wait_lock);
           return pid;
         }
-        
+
         release(&pp->lock);
       }
     }

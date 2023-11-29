@@ -13,9 +13,13 @@ uint64 sys_exit(void) {
   return 0; // not reached
 }
 
-uint64 sys_getpid(void) { return myproc()->pid; }
+uint64 sys_getpid(void) {
+  return myproc()->pid;
+}
 
-uint64 sys_fork(void) { return fork(); }
+uint64 sys_fork(void) {
+  return fork();
+}
 
 uint64 sys_wait(void) {
   uint64 p;
@@ -29,8 +33,9 @@ uint64 sys_sbrk(void) {
 
   argint(0, &n);
   addr = myproc()->sz;
-  if (growproc(n) < 0)
+  if (growproc(n) < 0) {
     return -1;
+  }
   return addr;
 }
 
@@ -70,11 +75,13 @@ uint64 sys_uptime(void) {
   return xticks;
 }
 
-uint64 sys_dump(void) { return dump(); }
+uint64 sys_dump(void) {
+  return dump();
+}
 
 uint64 sys_dump2(void) {
   int pid = 0;
-  int register_num = 0; 
+  int register_num = 0;
   uint64 return_value = 0;
 
   argint(0, &pid);

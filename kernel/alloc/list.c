@@ -8,7 +8,9 @@ void lst_init(struct list* lst) {
   lst->prev = lst;
 }
 
-int lst_empty(struct list* lst) { return lst->next == lst; }
+int lst_empty(struct list* lst) {
+  return lst->next == lst;
+}
 
 void lst_remove(struct list* node) {
   node->prev->next = node->next;

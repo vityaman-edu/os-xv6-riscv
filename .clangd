@@ -7,12 +7,16 @@ Diagnostics:
   ClangTidy:
     Add: "*"
     Remove: [
-      "android-cloexec-pipe",
-      "concurrency-mt-unsafe",
-      "bugprone-easily-swappable-parameters",
-      "altera-struct-pack-align",
-      "altera-id-dependent-backward-branch",
-      "altera-unroll-loops"
+      android-cloexec-pipe,
+      concurrency-mt-unsafe,
+      bugprone-easily-swappable-parameters,
+      altera-struct-pack-align,
+      altera-id-dependent-backward-branch,
+      altera-unroll-loops,
+      llvmlibc-implementation-in-namespace,
+
+      cppcoreguidelines-avoid-non-const-global-variables,
+      
     ]
 
 InlayHints:

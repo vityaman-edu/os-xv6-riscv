@@ -503,7 +503,9 @@ int writei(struct inode* ip, int user_src, uint64 src, uint off, uint n) {
 
 // Directories
 
-int namecmp(const char* s, const char* t) { return strncmp(s, t, DIRSIZ); }
+int namecmp(const char* s, const char* t) {
+  return strncmp(s, t, DIRSIZ);
+}
 
 // Look for a directory entry in a directory.
 // If found, set *poff to byte offset of entry.

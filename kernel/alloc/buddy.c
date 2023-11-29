@@ -109,14 +109,17 @@ void* buddy_malloc(uint64 nbytes) {
 
   // Found a block; pop it and potentially split it.
   char* p = lst_pop(&buddy_size_groups[k].freelist);
-  bits_switch(buddy_size_groups[k].pair_alloc_xor, buddy_pair_index(blk_index(k, p)));
+  bits_switch(
+      buddy_size_groups[k].pair_alloc_xor, buddy_pair_index(blk_index(k, p))
+  );
   for (; k > fk; k--) {
     // split a block at size k and mark one half allocated at size k-1
     // and put the buddy on the free list at size k-1
     char* q = p + BLK_SIZE(k - 1); // p's buddy
     bits_set(buddy_size_groups[k].split, blk_index(k, p));
     bits_switch(
-        buddy_size_groups[k - 1].pair_alloc_xor, buddy_pair_index(blk_index(k - 1, p))
+        buddy_size_groups[k - 1].pair_alloc_xor,
+        buddy_pair_index(blk_index(k - 1, p))
     );
     lst_push(&buddy_size_groups[k - 1].freelist, q);
   }
@@ -222,7 +225,9 @@ int bd_initfree_pair_left(int k, int bi) {
   if (bits_is_set(buddy_size_groups[k].pair_alloc_xor, buddy_pair_index(bi))) {
     // one of the pair is free
     free = BLK_SIZE(k);
-    lst_push(&buddy_size_groups[k].freelist, addr(k, bi)); // put bi on free list
+    lst_push(
+        &buddy_size_groups[k].freelist, addr(k, bi)
+    ); // put bi on free list
   }
   return free;
 }
@@ -291,7 +296,11 @@ void buddy_init(void* base, void* end) {
   // allocate bd_sizes array
   buddy_size_groups = (buddy_size_group_info*)p;
   p += sizeof(buddy_size_group_info) * buddy_size_groups_count;
-  memset(buddy_size_groups, 0, sizeof(buddy_size_group_info) * buddy_size_groups_count);
+  memset(
+      buddy_size_groups,
+      0,
+      sizeof(buddy_size_group_info) * buddy_size_groups_count
+  );
 
   // initialize free list and allocate the alloc array for each size k
   for (int k = 0; k < buddy_size_groups_count; k++) {
