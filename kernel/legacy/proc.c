@@ -127,11 +127,14 @@ static struct proc* allocproc(void) {
 // including user pages.
 // list_lock must be held.
 static void freeproc(struct proc* p) {
-  if (p->kstack) kfree((void*)p->kstack);
+  if (p->kstack)
+    kfree((void*)p->kstack);
   p->kstack = 0;
-  if (p->trapframe) kfree((void*)p->trapframe);
+  if (p->trapframe)
+    kfree((void*)p->trapframe);
   p->trapframe = 0;
-  if (p->pagetable) proc_freepagetable(p->pagetable, p->sz);
+  if (p->pagetable)
+    proc_freepagetable(p->pagetable, p->sz);
 
   proc_list_remove(p);
   bd_free((void*)p);
@@ -144,13 +147,20 @@ pagetable_t proc_pagetable(struct proc* p) {
 
   // An empty page table.
   pagetable = uvmcreate();
-  if (pagetable == 0) return 0;
+  if (pagetable == 0)
+    return 0;
 
   // map the trampoline code (for system call return)
   // at the highest user virtual address.
   // only the supervisor uses it, on the way
   // to/from user space, so not PTE_U.
-  if (mappages(pagetable, TRAMPOLINE, PGSIZE, (UInt64)trampoline, PTE_R | PTE_X)
+  if (mappages(
+          pagetable,
+          TRAMPOLINE,
+          PGSIZE,
+          (UInt64)trampoline,
+          PTE_R | PTE_X
+      )
       < 0) {
     uvmfree(pagetable, 0);
     return 0;
@@ -159,7 +169,11 @@ pagetable_t proc_pagetable(struct proc* p) {
   // map the trapframe page just below the trampoline page, for
   // trampoline.S.
   if (mappages(
-          pagetable, TRAPFRAME, PGSIZE, (UInt64)(p->trapframe), PTE_R | PTE_W
+          pagetable,
+          TRAPFRAME,
+          PGSIZE,
+          (UInt64)(p->trapframe),
+          PTE_R | PTE_W
       )
       < 0) {
     uvmunmap(pagetable, TRAMPOLINE, 1, 0);
@@ -181,12 +195,12 @@ void proc_freepagetable(pagetable_t pagetable, UInt64 sz) {
 // a user program that calls exec("/init")
 // assembled from ../user/initcode.S
 // od -t xC ../user/initcode
-UChar initcode[]
-    = {0x17, 0x05, 0x00, 0x00, 0x13, 0x05, 0x45, 0x02, 0x97, 0x05, 0x00,
-       0x00, 0x93, 0x85, 0x35, 0x02, 0x93, 0x08, 0x70, 0x00, 0x73, 0x00,
-       0x00, 0x00, 0x93, 0x08, 0x20, 0x00, 0x73, 0x00, 0x00, 0x00, 0xef,
-       0xf0, 0x9f, 0xff, 0x2f, 0x69, 0x6e, 0x69, 0x74, 0x00, 0x00, 0x24,
-       0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+UChar initcode[] = {
+    0x17, 0x05, 0x00, 0x00, 0x13, 0x05, 0x45, 0x02, 0x97, 0x05, 0x00,
+    0x00, 0x93, 0x85, 0x35, 0x02, 0x93, 0x08, 0x70, 0x00, 0x73, 0x00,
+    0x00, 0x00, 0x93, 0x08, 0x20, 0x00, 0x73, 0x00, 0x00, 0x00, 0xef,
+    0xf0, 0x9f, 0xff, 0x2f, 0x69, 0x6e, 0x69, 0x74, 0x00, 0x00, 0x24,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 
 // Set up first user process.
 void userinit(void) {
@@ -257,8 +271,11 @@ int fork(void) {
   np->trapframe->a0 = 0;
 
   // increment reference counts on open file descriptors.
-  for (i = 0; i < NOFILE; i++)
-    if (p->ofile[i]) np->ofile[i] = filedup(p->ofile[i]);
+  for (i = 0; i < NOFILE; i++) {
+    if (p->ofile[i]) {
+      np->ofile[i] = filedup(p->ofile[i]);
+    }
+  }
   np->cwd = idup(p->cwd);
 
   safestrcpy(np->name, p->name, sizeof(p->name));
@@ -279,7 +296,8 @@ void wakeup_holding_proc_list_lock(void* proc);
 void reparent(struct proc* p) {
   struct proc* pp;
 
-  for (pp = proc_list_head.next; pp != &proc_list_head; pp = pp->next) {
+  for (pp = proc_list_head.next; pp != &proc_list_head;
+       pp = pp->next) {
     if (pp->parent == p) {
       pp->parent = initproc;
       wakeup_holding_proc_list_lock(initproc);
@@ -293,7 +311,8 @@ void reparent(struct proc* p) {
 void exit(int status) {
   struct proc* p = myproc();
 
-  if (p == initproc) panic("init exiting");
+  if (p == initproc)
+    panic("init exiting");
 
   // Close all open files.
   for (int fd = 0; fd < NOFILE; fd++) {
@@ -345,7 +364,10 @@ int wait(UInt64 addr) {
           pid = pp->pid;
           if (addr != 0
               && copyout(
-                     p->pagetable, addr, (char*)&pp->xstate, sizeof(pp->xstate)
+                     p->pagetable,
+                     addr,
+                     (char*)&pp->xstate,
+                     sizeof(pp->xstate)
                  ) < 0) {
             release(&proc_list_lock);
             return -1;
@@ -413,10 +435,14 @@ void sched(void) {
   int intena;
   struct proc* p = myproc();
 
-  if (!holding(&proc_list_lock)) panic("sched list_lock");
-  if (mycpu()->noff != 1) panic("sched locks");
-  if (p->state == RUNNING) panic("sched running");
-  if (intr_get()) panic("sched interruptible");
+  if (!holding(&proc_list_lock))
+    panic("sched list_lock");
+  if (mycpu()->noff != 1)
+    panic("sched locks");
+  if (p->state == RUNNING)
+    panic("sched running");
+  if (intr_get())
+    panic("sched interruptible");
 
   intena = mycpu()->intena;
   swtch(&p->context, &mycpu()->context);
@@ -584,7 +610,8 @@ void procdump(void) {
 
   printf("\n");
   for (p = proc_list_head.next; p != &proc_list_head; p = p->next) {
-    if (p->state == UNUSED) continue;
+    if (p->state == UNUSED)
+      continue;
     if (p->state >= 0 && p->state < NELEM(states) && states[p->state])
       state = states[p->state];
     else
@@ -597,13 +624,15 @@ void procdump(void) {
   printf("Total procs: %d\n", proc_count);
 }
 
-int dump(void) { return 0; }
+int dump(void) {
+  return 0;
+}
 
-int dump2(int pid, int reg_num, UInt64 ret_addr) { 
+int dump2(int pid, int reg_num, UInt64 ret_addr) {
   (void)pid;
   (void)reg_num;
   (void)ret_addr;
-  return 0; 
+  return 0;
 }
 
 static void proc_list_head_init(struct proc* proc) {

@@ -18,7 +18,9 @@ struct {
   struct spinlock lock;
 } ftable;
 
-void fileinit(void) { initlock(&ftable.lock, "ftable"); }
+void fileinit(void) {
+  initlock(&ftable.lock, "ftable");
+}
 
 // Allocate a file structure.
 struct file* filealloc(void) {
@@ -96,14 +98,16 @@ int filestat(struct file* f, UInt64 addr) {
 int fileread(struct file* f, UInt64 addr, int n) {
   int r = 0;
 
-  if (f->readable == 0)
+  if (f->readable == 0) {
     return -1;
+  }
 
   if (f->type == FD_PIPE) {
     r = piperead(f->pipe, addr, n);
   } else if (f->type == FD_DEVICE) {
-    if (f->major < 0 || f->major >= NDEV || !devsw[f->major].read)
+    if (f->major < 0 || f->major >= NDEV || !devsw[f->major].read) {
       return -1;
+    }
     r = devsw[f->major].read(1, addr, n);
   } else if (f->type == FD_INODE) {
     ilock(f->ip);

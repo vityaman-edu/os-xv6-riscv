@@ -6,6 +6,8 @@
 #include "proc.h"
 #include "defs.h"
 
+#include <kernel/modern/Bridge.h>
+
 struct spinlock tickslock;
 UInt32 ticks;
 
@@ -20,6 +22,21 @@ void trapinit(void) { initlock(&tickslock, "time"); }
 
 // set up to take exceptions and traps while in the kernel.
 void trapinithart(void) { w_stvec((UInt64)kernelvec); }
+
+void usertrap_kill(struct proc* proc) {
+  printf("usertrap(): unexpected scause %p pid=%d\n", r_scause(), proc->pid);
+  printf("            sepc=%p stval=%p\n", r_sepc(), r_stval());
+  setkilled(proc);
+}
+
+void usertrap_on_page_fault(struct proc* proc, UInt64 virt) {
+  const int status = UVMCOWFixPageFault(proc->pagetable, proc->sz, virt);
+  if (status != 0) {
+    printf("[warn] UVM COW Failed: status = %d\n", status);
+    usertrap_kill(proc);
+  }
+}
+
 
 //
 // handle an interrupt, exception, or system call from user space.
@@ -57,10 +74,20 @@ void usertrap(void) {
     syscall();
   } else if ((which_dev = devintr()) != 0) {
     // ok
+  } else if (r_scause() == SCAUSE_PAGE_FAULT) {
+    /*
+    usertrap(): unexpected scause 0x000000000000000f pid=3
+                sepc=0x00000000000009ee stval=0x0000000000004f98
+
+    usertrap(): unexpected scause 0x0000000000000002 pid=2
+                sepc=0x0000000000000004 stval=0x0000000000000000
+                
+    scause 0x000000000000000f
+          sepc=0x0000000080006006 stval=0x0000000000000008
+    */
+    usertrap_on_page_fault(p, r_stval());
   } else {
-    printf("usertrap(): unexpected scause %p pid=%d\n", r_scause(), p->pid);
-    printf("            sepc=%p stval=%p\n", r_sepc(), r_stval());
-    setkilled(p);
+    usertrap_kill(p);
   }
 
   if (killed(p))

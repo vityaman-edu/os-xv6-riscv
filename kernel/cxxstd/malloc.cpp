@@ -1,7 +1,7 @@
 #include <cstddef>
 
 extern "C" {
-#include <kernel/defs.h>
+#include <kernel/legacy/defs.h>
 }
 
 /// Support C++ Standart Library Allocator

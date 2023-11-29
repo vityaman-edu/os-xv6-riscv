@@ -1,6 +1,6 @@
-#include "kernel/types.h"
-#include "kernel/stat.h"
-#include "kernel/fcntl.h"
+#include "kernel/legacy/types.h"
+#include "kernel/legacy/stat.h"
+#include "kernel/legacy/fcntl.h"
 #include "user/user.h"
 
 //

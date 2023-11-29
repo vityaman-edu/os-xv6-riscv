@@ -1,4 +1,6 @@
-#include <kernel/types.h>
+#pragma once
+
+#include <kernel/legacy/types.h>
 
 struct buf;
 struct context;
@@ -117,7 +119,7 @@ void            swtch(struct context*, struct context*);
 // spinlock.c
 void            acquire(struct spinlock*);
 int             holding(struct spinlock*);
-void            initlock(struct spinlock*, char*);
+void            initlock(struct spinlock*, const char*);
 void            release(struct spinlock*);
 void            push_off(void);
 void            pop_off(void);

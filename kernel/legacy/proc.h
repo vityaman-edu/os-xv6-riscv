@@ -1,4 +1,4 @@
-#include "kernel/types.h"
+#include "kernel/legacy/types.h"
 
 // Saved registers for kernel context switches.
 struct context {
