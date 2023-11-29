@@ -1,25 +1,25 @@
-// File system implementation.  Five layers:
-//   + Blocks: allocator for raw disk blocks.
-//   + Log: crash recovery for multi-step updates.
-//   + Files: inode allocator, reading, writing, metadata.
-//   + Directories: inode with special contents (list of other inodes!)
-//   + Names: paths like /usr/rtm/xv6/fs.c for convenient naming.
-//
-// This file contains the low-level file system manipulation
-// routines.  The (higher-level) system call implementations
-// are in sysfile.c.
+/// File system implementation.  Five layers:
+///   + Blocks: allocator for raw disk blocks.
+///   + Log: crash recovery for multi-step updates.
+///   + Files: inode allocator, reading, writing, metadata.
+///   + Directories: inode with special contents (list of other inodes!)
+///   + Names: paths like /usr/rtm/xv6/fs.c for convenient naming.
+///
+/// This file contains the low-level file system manipulation
+/// routines.  The (higher-level) system call implementations
+/// are in sysfile.c.
 
-#include "kernel/core/type.h"
-#include "kernel/hardware/riscv.h"
-#include "kernel/defs.h"
-#include "kernel/core/param.h"
-#include "kernel/file/stat.h"
-#include "kernel/sync/spinlock.h"
-#include "kernel/process/proc.h"
-#include "kernel/sync/sleeplock.h"
-#include "kernel/file/fs.h"
-#include "kernel/file/buf.h"
-#include "kernel/file/file.h"
+#include <kernel/core/param.h>
+#include <kernel/core/type.h>
+#include <kernel/defs.h>
+#include <kernel/file/buf.h>
+#include <kernel/file/file.h>
+#include <kernel/file/fs.h>
+#include <kernel/file/stat.h>
+#include <kernel/hardware/riscv.h>
+#include <kernel/process/proc.h>
+#include <kernel/sync/sleeplock.h>
+#include <kernel/sync/spinlock.h>
 
 #define min(a, b) ((a) < (b) ? (a) : (b))
 // there should be one superblock per disk device, but we run with
@@ -38,8 +38,9 @@ static void readsb(int dev, struct superblock* sb) {
 // Init fs
 void fsinit(int dev) {
   readsb(dev, &sb);
-  if (sb.magic != FSMAGIC)
+  if (sb.magic != FSMAGIC) {
     panic("invalid file system");
+  }
   initlog(dev, &sb);
 }
 
@@ -88,8 +89,9 @@ static void bfree(int dev, uint b) {
   bp = bread(dev, BBLOCK(b, sb));
   bi = b % BPB;
   m = 1 << (bi % 8);
-  if ((bp->data[bi / 8] & m) == 0)
+  if ((bp->data[bi / 8] & m) == 0) {
     panic("freeing free block");
+  }
   bp->data[bi / 8] &= ~m;
   log_write(bp);
   brelse(bp);
@@ -246,8 +248,9 @@ static struct inode* iget(uint dev, uint inum) {
   }
 
   // Recycle an inode entry.
-  if (empty == 0)
+  if (empty == 0) {
     panic("iget: no inodes");
+  }
 
   ip = empty;
   ip->dev = dev;
@@ -274,8 +277,9 @@ void ilock(struct inode* ip) {
   struct buf* bp;
   struct dinode* dip;
 
-  if (ip == 0 || ip->ref < 1)
+  if (ip == 0 || ip->ref < 1) {
     panic("ilock");
+  }
 
   acquiresleep(&ip->lock);
 
@@ -290,15 +294,17 @@ void ilock(struct inode* ip) {
     memmove(ip->addrs, dip->addrs, sizeof(ip->addrs));
     brelse(bp);
     ip->valid = 1;
-    if (ip->type == 0)
+    if (ip->type == 0) {
       panic("ilock: no type");
+    }
   }
 }
 
 // Unlock the given inode.
 void iunlock(struct inode* ip) {
-  if (ip == 0 || !holdingsleep(&ip->lock) || ip->ref < 1)
+  if (ip == 0 || !holdingsleep(&ip->lock) || ip->ref < 1) {
     panic("iunlock");
+  }
 
   releasesleep(&ip->lock);
 }
@@ -359,8 +365,9 @@ static uint bmap(struct inode* ip, uint bn) {
   if (bn < NDIRECT) {
     if ((addr = ip->addrs[bn]) == 0) {
       addr = balloc(ip->dev);
-      if (addr == 0)
+      if (addr == 0) {
         return 0;
+      }
       ip->addrs[bn] = addr;
     }
     return addr;
@@ -371,8 +378,9 @@ static uint bmap(struct inode* ip, uint bn) {
     // Load indirect block, allocating if necessary.
     if ((addr = ip->addrs[NDIRECT]) == 0) {
       addr = balloc(ip->dev);
-      if (addr == 0)
+      if (addr == 0) {
         return 0;
+      }
       ip->addrs[NDIRECT] = addr;
     }
     bp = bread(ip->dev, addr);
@@ -409,8 +417,9 @@ void itrunc(struct inode* ip) {
     bp = bread(ip->dev, ip->addrs[NDIRECT]);
     a = (uint*)bp->data;
     for (j = 0; j < NINDIRECT; j++) {
-      if (a[j])
+      if (a[j]) {
         bfree(ip->dev, a[j]);
+      }
     }
     brelse(bp);
     bfree(ip->dev, ip->addrs[NDIRECT]);
@@ -439,15 +448,18 @@ int readi(struct inode* ip, int user_dst, uint64 dst, uint off, uint n) {
   uint tot, m;
   struct buf* bp;
 
-  if (off > ip->size || off + n < off)
+  if (off > ip->size || off + n < off) {
     return 0;
-  if (off + n > ip->size)
+  }
+  if (off + n > ip->size) {
     n = ip->size - off;
+  }
 
   for (tot = 0; tot < n; tot += m, off += m, dst += m) {
     uint addr = bmap(ip, off / BSIZE);
-    if (addr == 0)
+    if (addr == 0) {
       break;
+    }
     bp = bread(ip->dev, addr);
     m = min(n - tot, BSIZE - off % BSIZE);
     if (either_copyout(user_dst, dst, bp->data + (off % BSIZE), m) == -1) {
@@ -471,15 +483,18 @@ int writei(struct inode* ip, int user_src, uint64 src, uint off, uint n) {
   uint tot, m;
   struct buf* bp;
 
-  if (off > ip->size || off + n < off)
+  if (off > ip->size || off + n < off) {
     return -1;
-  if (off + n > MAXFILE * BSIZE)
+  }
+  if (off + n > MAXFILE * BSIZE) {
     return -1;
+  }
 
   for (tot = 0; tot < n; tot += m, off += m, src += m) {
     uint addr = bmap(ip, off / BSIZE);
-    if (addr == 0)
+    if (addr == 0) {
       break;
+    }
     bp = bread(ip->dev, addr);
     m = min(n - tot, BSIZE - off % BSIZE);
     if (either_copyin(bp->data + (off % BSIZE), user_src, src, m) == -1) {
@@ -490,8 +505,9 @@ int writei(struct inode* ip, int user_src, uint64 src, uint off, uint n) {
     brelse(bp);
   }
 
-  if (off > ip->size)
+  if (off > ip->size) {
     ip->size = off;
+  }
 
   // write the i-node back to disk even if the size didn't change
   // because the loop above might have called bmap() and added a new
@@ -513,18 +529,22 @@ struct inode* dirlookup(struct inode* dp, char* name, uint* poff) {
   uint off, inum;
   struct dirent de;
 
-  if (dp->type != T_DIR)
+  if (dp->type != T_DIR) {
     panic("dirlookup not DIR");
+  }
 
   for (off = 0; off < dp->size; off += sizeof(de)) {
-    if (readi(dp, 0, (uint64)&de, off, sizeof(de)) != sizeof(de))
+    if (readi(dp, 0, (uint64)&de, off, sizeof(de)) != sizeof(de)) {
       panic("dirlookup read");
-    if (de.inum == 0)
+    }
+    if (de.inum == 0) {
       continue;
+    }
     if (namecmp(name, de.name) == 0) {
       // entry matches path element
-      if (poff)
+      if (poff) {
         *poff = off;
+      }
       inum = de.inum;
       return iget(dp->dev, inum);
     }
@@ -548,16 +568,19 @@ int dirlink(struct inode* dp, char* name, uint inum) {
 
   // Look for an empty dirent.
   for (off = 0; off < dp->size; off += sizeof(de)) {
-    if (readi(dp, 0, (uint64)&de, off, sizeof(de)) != sizeof(de))
+    if (readi(dp, 0, (uint64)&de, off, sizeof(de)) != sizeof(de)) {
       panic("dirlink read");
-    if (de.inum == 0)
+    }
+    if (de.inum == 0) {
       break;
+    }
   }
 
   strncpy(de.name, name, DIRSIZ);
   de.inum = inum;
-  if (writei(dp, 0, (uint64)&de, off, sizeof(de)) != sizeof(de))
+  if (writei(dp, 0, (uint64)&de, off, sizeof(de)) != sizeof(de)) {
     return -1;
+  }
 
   return 0;
 }
@@ -580,22 +603,26 @@ static char* skipelem(char* path, char* name) {
   char* s;
   int len;
 
-  while (*path == '/')
+  while (*path == '/') {
     path++;
-  if (*path == 0)
+  }
+  if (*path == 0) {
     return 0;
+  }
   s = path;
-  while (*path != '/' && *path != 0)
+  while (*path != '/' && *path != 0) {
     path++;
+  }
   len = path - s;
-  if (len >= DIRSIZ)
+  if (len >= DIRSIZ) {
     memmove(name, s, DIRSIZ);
-  else {
+  } else {
     memmove(name, s, len);
     name[len] = 0;
   }
-  while (*path == '/')
+  while (*path == '/') {
     path++;
+  }
   return path;
 }
 
@@ -606,10 +633,11 @@ static char* skipelem(char* path, char* name) {
 static struct inode* namex(char* path, int nameiparent, char* name) {
   struct inode *ip, *next;
 
-  if (*path == '/')
+  if (*path == '/') {
     ip = iget(ROOTDEV, ROOTINO);
-  else
+  } else {
     ip = idup(myproc()->cwd);
+  }
 
   while ((path = skipelem(path, name)) != 0) {
     ilock(ip);

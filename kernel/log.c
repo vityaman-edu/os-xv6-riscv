@@ -1,11 +1,11 @@
-#include "kernel/core/type.h"
-#include "kernel/hardware/riscv.h"
-#include "defs.h"
-#include "kernel/core/param.h"
-#include "sync/spinlock.h"
-#include "sync/sleeplock.h"
-#include "file/fs.h"
-#include "kernel/file/buf.h"
+#include <kernel/core/param.h>
+#include <kernel/core/type.h>
+#include <kernel/defs.h>
+#include <kernel/file/buf.h>
+#include <kernel/file/fs.h>
+#include <kernel/hardware/riscv.h>
+#include <kernel/sync/sleeplock.h>
+#include <kernel/sync/spinlock.h>
 
 // Simple logging that allows concurrent FS system calls.
 //
@@ -52,8 +52,9 @@ static void recover_from_log(void);
 static void commit();
 
 void initlog(int dev, struct superblock* sb) {
-  if (sizeof(struct logheader) >= BSIZE)
+  if (sizeof(struct logheader) >= BSIZE) {
     panic("initlog: too big logheader");
+  }
 
   initlock(&log.lock, "log");
   log.start = sb->logstart;
@@ -71,8 +72,9 @@ static void install_trans(int recovering) {
     struct buf* dbuf = bread(log.dev, log.lh.block[tail]);   // read dst
     memmove(dbuf->data, lbuf->data, BSIZE); // copy block to dst
     bwrite(dbuf);                           // write dst to disk
-    if (recovering == 0)
+    if (recovering == 0) {
       bunpin(dbuf);
+    }
     brelse(lbuf);
     brelse(dbuf);
   }
@@ -136,8 +138,9 @@ void end_op(void) {
 
   acquire(&log.lock);
   log.outstanding -= 1;
-  if (log.committing)
+  if (log.committing) {
     panic("log.committing");
+  }
   if (log.outstanding == 0) {
     do_commit = 1;
     log.committing = 1;
@@ -197,10 +200,12 @@ void log_write(struct buf* b) {
   int i;
 
   acquire(&log.lock);
-  if (log.lh.n >= LOGSIZE || log.lh.n >= log.size - 1)
+  if (log.lh.n >= LOGSIZE || log.lh.n >= log.size - 1) {
     panic("too big a transaction");
-  if (log.outstanding < 1)
+  }
+  if (log.outstanding < 1) {
     panic("log_write outside of trans");
+  }
 
   for (i = 0; i < log.lh.n; i++) {
     if (log.lh.block[i] == b->blockno) // log absorption

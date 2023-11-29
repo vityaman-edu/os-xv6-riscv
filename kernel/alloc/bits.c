@@ -1,5 +1,5 @@
-#include "bits.h"
-#include "../defs.h"
+#include <kernel/alloc/bits.h>
+#include <kernel/defs.h>
 
 /// Return 1 if bit at position index in array is set to 1
 bool bits_is_set(bits bits, int index) {

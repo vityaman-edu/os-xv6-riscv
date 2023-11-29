@@ -1,8 +1,8 @@
-#include "kernel/core/type.h"
-#include "kernel/core/param.h"
-#include "kernel/hardware/memlayout.h"
-#include "kernel/hardware/riscv.h"
-#include "kernel/defs.h"
+#include <kernel/core/param.h>
+#include <kernel/core/type.h>
+#include <kernel/defs.h>
+#include <kernel/hardware/memlayout.h>
+#include <kernel/hardware/riscv.h>
 
 //
 // the riscv Platform Level Interrupt Controller (PLIC).

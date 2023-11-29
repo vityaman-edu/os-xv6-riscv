@@ -5,7 +5,7 @@ ColumnLimit: 80
 
 ---
 Language: Cpp
-SortIncludes: false
+SortIncludes: true
 AlignAfterOpenBracket: BlockIndent
 AlwaysBreakTemplateDeclarations: Yes
 BinPackArguments: false

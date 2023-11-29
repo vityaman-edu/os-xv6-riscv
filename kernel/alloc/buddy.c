@@ -1,12 +1,11 @@
-#include "kernel/core/param.h"
-#include "kernel/hardware/memlayout.h"
-#include "kernel/sync/spinlock.h"
-#include "kernel/hardware/riscv.h"
-#include "kernel/defs.h"
-
-#include "buddy.h"
-#include "list.h"
-#include "bits.h"
+#include <kernel/alloc/bits.h>
+#include <kernel/alloc/buddy.h>
+#include <kernel/alloc/list.h>
+#include <kernel/core/param.h>
+#include <kernel/defs.h>
+#include <kernel/hardware/memlayout.h>
+#include <kernel/hardware/riscv.h>
+#include <kernel/sync/spinlock.h>
 
 // The smallest block size
 #define LEAF_SIZE 16
@@ -99,8 +98,9 @@ void* buddy_malloc(uint64 nbytes) {
   // Find a free block >= nbytes, starting with smallest k possible
   fk = firstk(nbytes);
   for (k = fk; k < buddy_size_groups_count; k++) {
-    if (!lst_empty(&buddy_size_groups[k].freelist))
+    if (!lst_empty(&buddy_size_groups[k].freelist)) {
       break;
+    }
   }
   if (k >= buddy_size_groups_count) { // No free blocks?
     release(&buddy_lock);
@@ -171,8 +171,9 @@ void buddy_free(void* p) {
 // Compute the first block at size k that doesn't contain p
 int blk_index_next(int k, char* p) {
   int n = (p - (char*)buddy_base) / BLK_SIZE(k);
-  if ((p - (char*)buddy_base) % BLK_SIZE(k) != 0)
+  if ((p - (char*)buddy_base) % BLK_SIZE(k) != 0) {
     n++;
+  }
   return n;
 }
 
@@ -189,8 +190,9 @@ int log2(uint64 n) {
 void bd_mark(void* start, void* stop) {
   int bi, bj;
 
-  if (((uint64)start % LEAF_SIZE != 0) || ((uint64)stop % LEAF_SIZE != 0))
+  if (((uint64)start % LEAF_SIZE != 0) || ((uint64)stop % LEAF_SIZE != 0)) {
     panic("bd_mark");
+  }
 
   for (int k = 0; k < buddy_size_groups_count; k++) {
     bi = blk_index(k, start);
@@ -225,9 +227,8 @@ int bd_initfree_pair_left(int k, int bi) {
   if (bits_is_set(buddy_size_groups[k].pair_alloc_xor, buddy_pair_index(bi))) {
     // one of the pair is free
     free = BLK_SIZE(k);
-    lst_push(
-        &buddy_size_groups[k].freelist, addr(k, bi)
-    ); // put bi on free list
+    // put bi on free list
+    lst_push(&buddy_size_groups[k].freelist, addr(k, bi));
   }
   return free;
 }
@@ -242,8 +243,9 @@ int bd_initfree(void* bd_left, void* bd_right) {
     int left = blk_index_next(k, bd_left);
     int right = blk_index(k, bd_right);
     free += bd_initfree_pair_left(k, left);
-    if (right <= left)
+    if (right <= left) {
       continue;
+    }
     free += bd_initfree_pair_right(k, right);
   }
   return free;
@@ -264,8 +266,10 @@ int bd_mark_data_structures(byte* p) {
 // Mark the range [end, HEAPSIZE) as allocated
 int bd_mark_unavailable(void* end, void* left) {
   int unavailable = BLK_SIZE(MAXSIZE) - (end - buddy_base);
-  if (unavailable > 0)
+  if (unavailable > 0) {
     unavailable = ROUNDUP(unavailable, LEAF_SIZE);
+  }
+  
   printf("bd: 0x%x bytes unavailable\n", unavailable);
 
   void* bd_end = buddy_base + BLK_SIZE(MAXSIZE) - unavailable;

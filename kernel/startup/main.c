@@ -1,8 +1,8 @@
-#include "kernel/core/type.h"
-#include "kernel/core/param.h"
-#include "kernel/hardware/memlayout.h"
-#include "kernel/hardware/riscv.h"
-#include "kernel/defs.h"
+#include <kernel/core/param.h>
+#include <kernel/core/type.h>
+#include <kernel/defs.h>
+#include <kernel/hardware/memlayout.h>
+#include <kernel/hardware/riscv.h>
 
 volatile static int started = 0;
 
@@ -30,8 +30,9 @@ void main() {
     __sync_synchronize();
     started = 1;
   } else {
-    while (started == 0)
-      ;
+    while (started == 0) {
+      // Wait, do nothing
+    }
     __sync_synchronize();
     printf("hart %d starting\n", cpuid());
     kvminithart();  // turn on paging

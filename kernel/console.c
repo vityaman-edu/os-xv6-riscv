@@ -11,16 +11,16 @@
 
 #include <stdarg.h>
 
-#include "kernel/core/type.h"
-#include "kernel/core/param.h"
-#include "sync/spinlock.h"
-#include "sync/sleeplock.h"
-#include "file/fs.h"
-#include "file/file.h"
-#include "kernel/hardware/memlayout.h"
-#include "kernel/hardware/riscv.h"
-#include "defs.h"
-#include "kernel/process/proc.h"
+#include <kernel/core/param.h>
+#include <kernel/core/type.h>
+#include <kernel/defs.h>
+#include <kernel/file/file.h>
+#include <kernel/file/fs.h>
+#include <kernel/hardware/memlayout.h>
+#include <kernel/hardware/riscv.h>
+#include <kernel/process/proc.h>
+#include <kernel/sync/sleeplock.h>
+#include <kernel/sync/spinlock.h>
 
 #define BACKSPACE 0x100
 #define C(x) ((x) - '@') // Control-x

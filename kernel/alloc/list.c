@@ -1,7 +1,6 @@
-#include "../core/type.h"
-#include "../defs.h"
-
-#include "list.h"
+#include <kernel/alloc/list.h>
+#include <kernel/core/type.h>
+#include <kernel/defs.h>
 
 void lst_init(struct list* lst) {
   lst->next = lst;

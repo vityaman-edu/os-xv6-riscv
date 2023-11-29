@@ -1,13 +1,12 @@
-#include "kernel/core/type.h"
-#include "kernel/hardware/riscv.h"
-#include "kernel/defs.h"
-#include "kernel/core/param.h"
-#include "kernel/sync/spinlock.h"
-#include "kernel/process/proc.h"
-#include "kernel/sync/sleeplock.h"
-
-#include "fs.h"
-#include "file.h"
+#include <kernel/core/param.h>
+#include <kernel/core/type.h>
+#include <kernel/defs.h>
+#include <kernel/file/file.h>
+#include <kernel/file/fs.h>
+#include <kernel/hardware/riscv.h>
+#include <kernel/process/proc.h>
+#include <kernel/sync/sleeplock.h>
+#include <kernel/sync/spinlock.h>
 
 #define PIPESIZE 512
 
@@ -83,8 +82,9 @@ void pipeclose(struct pipe* pi, int writable) {
   if (pi->readopen == 0 && pi->writeopen == 0) {
     release(&pi->lock);
     kfree((char*)pi);
-  } else
+  } else {
     release(&pi->lock);
+  }
 }
 
 int pipewrite(struct pipe* pi, uint64 addr, int n) {
@@ -102,8 +102,9 @@ int pipewrite(struct pipe* pi, uint64 addr, int n) {
       sleep(&pi->nwrite, &pi->lock);
     } else {
       char ch;
-      if (copyin(pr->pagetable, &ch, addr + i, 1) == -1)
+      if (copyin(pr->pagetable, &ch, addr + i, 1) == -1) {
         break;
+      }
       pi->data[pi->nwrite++ % PIPESIZE] = ch;
       i++;
     }
@@ -128,11 +129,13 @@ int piperead(struct pipe* pi, uint64 addr, int n) {
     sleep(&pi->nread, &pi->lock); // DOC: piperead-sleep
   }
   for (i = 0; i < n; i++) { // DOC: piperead-copy
-    if (pi->nread == pi->nwrite)
+    if (pi->nread == pi->nwrite) {
       break;
+    }
     ch = pi->data[pi->nread++ % PIPESIZE];
-    if (copyout(pr->pagetable, addr + i, &ch, 1) == -1)
+    if (copyout(pr->pagetable, addr + i, &ch, 1) == -1) {
       break;
+    }
   }
   wakeup(&pi->nwrite); // DOC: piperead-wakeup
   release(&pi->lock);

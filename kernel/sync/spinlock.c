@@ -1,13 +1,12 @@
 // Mutual exclusion spin locks.
 
-#include "kernel/core/type.h"
-#include "kernel/core/param.h"
-#include "kernel/hardware/memlayout.h"
-#include "kernel/hardware/riscv.h"
-#include "kernel/process/proc.h"
-#include "kernel/defs.h"
-
-#include "spinlock.h"
+#include <kernel/core/param.h>
+#include <kernel/core/type.h>
+#include <kernel/defs.h>
+#include <kernel/hardware/memlayout.h>
+#include <kernel/hardware/riscv.h>
+#include <kernel/process/proc.h>
+#include <kernel/sync/spinlock.h>
 
 void initlock(struct spinlock* lk, char* name) {
   lk->name = name;
@@ -89,11 +88,14 @@ void push_off(void) {
 
 void pop_off(void) {
   struct cpu* c = mycpu();
-  if (intr_get())
+  if (intr_get()) {
     panic("pop_off - interruptible");
-  if (c->noff < 1)
+  }
+  if (c->noff < 1) {
     panic("pop_off");
+  }
   c->noff -= 1;
-  if (c->noff == 0 && c->intena)
+  if (c->noff == 0 && c->intena) {
     intr_on();
+  }
 }

@@ -1,14 +1,12 @@
-//
 // low-level driver routines for 16550a UART.
-//
 
-#include "kernel/core/type.h"
-#include "kernel/core/param.h"
-#include "kernel/hardware/memlayout.h"
-#include "kernel/hardware/riscv.h"
-#include "kernel/sync/spinlock.h"
-#include "kernel/process/proc.h"
-#include "kernel/defs.h"
+#include <kernel/core/param.h>
+#include <kernel/core/type.h>
+#include <kernel/defs.h>
+#include <kernel/hardware/memlayout.h>
+#include <kernel/hardware/riscv.h>
+#include <kernel/process/proc.h>
+#include <kernel/sync/spinlock.h>
 
 // the UART control registers are memory-mapped
 // at address UART0. this macro returns the
@@ -85,8 +83,9 @@ void uartputc(int c) {
   acquire(&uart_tx_lock);
 
   if (panicked) {
-    for (;;)
-      ;
+    for (;;) {
+      // Wait
+    }
   }
   while (uart_tx_w == uart_tx_r + UART_TX_BUF_SIZE) {
     // buffer is full.
@@ -107,13 +106,16 @@ void uartputc_sync(int c) {
   push_off();
 
   if (panicked) {
-    for (;;)
-      ;
+    for (;;) {
+      // Wait
+    }
   }
 
   // wait for Transmit Holding Empty to be set in LSR.
-  while ((ReadReg(LSR) & LSR_TX_IDLE) == 0)
-    ;
+  while ((ReadReg(LSR) & LSR_TX_IDLE) == 0) {
+    // Wait
+  }
+
   WriteReg(THR, c);
 
   pop_off();
@@ -153,9 +155,8 @@ int uartgetc(void) {
   if (ReadReg(LSR) & 0x01) {
     // input data is ready.
     return ReadReg(RHR);
-  } else {
-    return -1;
   }
+  return -1;
 }
 
 // handle a uart interrupt, raised because input has
@@ -165,8 +166,9 @@ void uartintr(void) {
   // read and process incoming characters.
   while (1) {
     int c = uartgetc();
-    if (c == -1)
+    if (c == -1) {
       break;
+    }
     consoleintr(c);
   }
 

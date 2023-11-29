@@ -1,18 +1,16 @@
-//
-// ramdisk that uses the disk image loaded by qemu -initrd fs.img
-//
+/// ramdisk that uses the disk image loaded by qemu -initrd fs.img
 
-#include "kernel/core/type.h"
-#include "kernel/hardware/riscv.h"
-#include "defs.h"
-#include "kernel/core/param.h"
-#include "memlayout.h"
-#include "sync/spinlock.h"
-#include "sync/sleeplock.h"
-#include "file/fs.h"
-#include "buf.h"
+#include <kernel/core/param.h>
+#include <kernel/core/type.h>
+#include <kernel/defs.h>
+#include <kernel/file/buf.h>
+#include <kernel/file/fs.h>
+#include <kernel/hardware/memlayout.h>
+#include <kernel/hardware/riscv.h>
+#include <kernel/sync/sleeplock.h>
+#include <kernel/sync/spinlock.h>
 
-void ramdiskinit(void) {
+void ramdiskinit() {
 }
 
 // If B_DIRTY is set, write buf to disk, clear B_DIRTY, set B_VALID.

@@ -1,6 +1,6 @@
 CompileFlags:
-  Add: [-Wall, -Wextra, -pedantic]
-  Compiler: clang
+  Add: [-Wall]
+  Compiler: gcc
 
 Diagnostics:
   UnusedIncludes: Strict
@@ -16,6 +16,11 @@ Diagnostics:
       llvmlibc-implementation-in-namespace,
 
       cppcoreguidelines-avoid-non-const-global-variables,
+      modernize-use-trailing-return-type,
+      hicpp-avoid-c-arrays,
+      llvmlibc-callee-namespace,
+      llvmlibc-restrict-system-libc-headers,
+      
     ]
 
 InlayHints:

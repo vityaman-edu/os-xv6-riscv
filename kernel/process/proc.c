@@ -1,10 +1,10 @@
-#include "kernel/core/type.h"
-#include "kernel/core/param.h"
-#include "kernel/hardware/memlayout.h"
-#include "kernel/hardware/riscv.h"
-#include "kernel/sync/spinlock.h"
-#include "kernel/process/proc.h"
-#include "kernel/defs.h"
+#include <kernel/core/param.h>
+#include <kernel/core/type.h>
+#include <kernel/defs.h>
+#include <kernel/hardware/memlayout.h>
+#include <kernel/hardware/riscv.h>
+#include <kernel/process/proc.h>
+#include <kernel/sync/spinlock.h>
 
 struct cpu cpus[NCPU];
 
@@ -34,8 +34,9 @@ void proc_mapstacks(pagetable_t kpgtbl) {
 
   for (p = proc; p < &proc[NPROC]; p++) {
     char* pa = kalloc();
-    if (pa == 0)
+    if (pa == 0) {
       panic("kalloc");
+    }
     uint64 va = KSTACK((int)(p - proc));
     kvmmap(kpgtbl, va, (uint64)pa, PGSIZE, PTE_R | PTE_W);
   }
@@ -139,11 +140,13 @@ found:
 // including user pages.
 // p->lock must be held.
 static void freeproc(struct proc* p) {
-  if (p->trapframe)
+  if (p->trapframe) {
     kfree((void*)p->trapframe);
+  }
   p->trapframe = 0;
-  if (p->pagetable)
+  if (p->pagetable) {
     proc_freepagetable(p->pagetable, p->sz);
+  }
   p->pagetable = 0;
   p->sz = 0;
   p->pid = 0;
@@ -162,8 +165,9 @@ pagetable_t proc_pagetable(struct proc* p) {
 
   // An empty page table.
   pagetable = uvmcreate();
-  if (pagetable == 0)
+  if (pagetable == 0) {
     return 0;
+  }
 
   // map the trampoline code (for system call return)
   // at the highest user virtual address.
@@ -276,9 +280,11 @@ int fork(void) {
   np->trapframe->a0 = 0;
 
   // increment reference counts on open file descriptors.
-  for (i = 0; i < NOFILE; i++)
-    if (p->ofile[i])
+  for (i = 0; i < NOFILE; i++) {
+    if (p->ofile[i]) {
       np->ofile[i] = filedup(p->ofile[i]);
+    }
+  }
   np->cwd = idup(p->cwd);
 
   safestrcpy(np->name, p->name, sizeof(p->name));
@@ -317,8 +323,9 @@ void reparent(struct proc* p) {
 void exit(int status) {
   struct proc* p = myproc();
 
-  if (p == initproc)
+  if (p == initproc) {
     panic("init exiting");
+  }
 
   // Close all open files.
   for (int fd = 0; fd < NOFILE; fd++) {
@@ -585,10 +592,9 @@ int either_copyout(int user_dst, uint64 dst, void* src, uint64 len) {
   struct proc* p = myproc();
   if (user_dst) {
     return copyout(p->pagetable, dst, src, len);
-  } else {
-    memmove((char*)dst, src, len);
-    return 0;
   }
+  memmove((char*)dst, src, len);
+  return 0;
 }
 
 // Copy from either a user address, or kernel address,
@@ -598,10 +604,9 @@ int either_copyin(void* dst, int user_src, uint64 src, uint64 len) {
   struct proc* p = myproc();
   if (user_src) {
     return copyin(p->pagetable, dst, src, len);
-  } else {
-    memmove(dst, (char*)src, len);
-    return 0;
   }
+  memmove(dst, (char*)src, len);
+  return 0;
 }
 
 // Print a process listing to console.  For debugging.
@@ -621,12 +626,14 @@ void procdump(void) {
 
   printf("\n");
   for (p = proc; p < &proc[NPROC]; p++) {
-    if (p->state == UNUSED)
+    if (p->state == UNUSED) {
       continue;
-    if (p->state >= 0 && p->state < NELEM(states) && states[p->state])
+    }
+    if (p->state >= 0 && p->state < NELEM(states) && states[p->state]) {
       state = states[p->state];
-    else
+    } else {
       state = "???";
+    }
     printf("%d %s %s", p->pid, state, p->name);
     printf("\n");
   }

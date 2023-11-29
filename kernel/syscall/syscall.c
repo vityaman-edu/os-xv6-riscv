@@ -1,12 +1,11 @@
-#include "kernel/core/type.h"
-#include "kernel/core/param.h"
-#include "kernel/hardware/memlayout.h"
-#include "kernel/hardware/riscv.h"
-#include "kernel/sync/spinlock.h"
-#include "kernel/process/proc.h"
-#include "kernel/defs.h"
-
-#include "syscall.h"
+#include <kernel/core/param.h>
+#include <kernel/core/type.h>
+#include <kernel/defs.h>
+#include <kernel/hardware/memlayout.h>
+#include <kernel/hardware/riscv.h>
+#include <kernel/process/proc.h>
+#include <kernel/sync/spinlock.h>
+#include <kernel/syscall/syscall.h>
 
 // Fetch the uint64 at addr from the current process.
 int fetchaddr(uint64 addr, uint64* ip) {
@@ -47,9 +46,10 @@ static uint64 argraw(int n) {
     return p->trapframe->a4;
   case 5:
     return p->trapframe->a5;
+  default:
+    panic("argraw");
+    return -1;
   }
-  panic("argraw");
-  return -1;
 }
 
 // Fetch the nth 32-bit system call argument.

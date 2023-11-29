@@ -159,8 +159,7 @@ clean:
 	rm -f *.tex *.dvi *.idx *.aux *.log *.ind *.ilg \
 	*/*.o */*/*.o */*.d */*/*.d */*.asm */*.sym \
 	$U/initcode $U/initcode.out $K/kernel fs.img \
-	mkfs/mkfs .gdbinit \
-        $U/usys.S \
+	mkfs/mkfs .gdbinit $U/usys.S \
 	$(UPROGS)
 
 # try to generate a unique GDB port
