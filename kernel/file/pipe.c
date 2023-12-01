@@ -34,7 +34,7 @@ int pipealloc(struct file** rfd, struct file** wfd) {
     goto bad;
   }
 
-  pipe = (struct pipe*)kalloc();
+  pipe = (struct pipe*)frame_allocate();
   if (pipe == nullptr) {
     goto bad;
   }
@@ -60,7 +60,7 @@ int pipealloc(struct file** rfd, struct file** wfd) {
 
 bad:
   if (pipe) {
-    kfree((char*)pipe);
+    frame_free((char*)pipe);
   }
   if (*rfd) {
     fileclose(*rfd);
@@ -82,7 +82,7 @@ void pipeclose(struct pipe* pi, int writable) {
   }
   if (pi->readopen == 0 && pi->writeopen == 0) {
     release(&pi->lock);
-    kfree((char*)pi);
+    frame_free((char*)pi);
   } else {
     release(&pi->lock);
   }

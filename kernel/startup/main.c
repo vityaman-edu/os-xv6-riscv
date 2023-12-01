@@ -28,7 +28,7 @@ void main() {
     printf("[info][boot] Printf initialized.\n");
 
     printf("[info][boot] Initializing frame allocator...\n");
-    kinit();
+    frame_allocator_init();
 
     printf("[info][boot] Creating kernel page table...\n");
     kvminit();

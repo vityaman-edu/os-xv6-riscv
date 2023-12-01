@@ -447,7 +447,7 @@ uint64 sys_exec(void) {
       argv[i] = 0;
       break;
     }
-    argv[i] = kalloc();
+    argv[i] = frame_allocate();
     if (argv[i] == 0) {
       goto bad;
     }
@@ -459,14 +459,14 @@ uint64 sys_exec(void) {
   int ret = exec(path, argv);
 
   for (i = 0; i < NELEM(argv) && argv[i] != 0; i++) {
-    kfree(argv[i]);
+    frame_free(argv[i]);
   }
 
   return ret;
 
 bad:
   for (i = 0; i < NELEM(argv) && argv[i] != 0; i++) {
-    kfree(argv[i]);
+    frame_free(argv[i]);
   }
   return -1;
 }

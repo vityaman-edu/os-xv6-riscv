@@ -1,5 +1,6 @@
 #pragma once
 
+#include <kernel/alloc/frame_allocator.h>
 #include <kernel/core/type.h>
 #include <kernel/hw/arch/riscv/riscv.h>
 #include <kernel/memory/vm.h>
@@ -64,11 +65,6 @@ void itrunc(struct inode*);
 void ramdiskinit(void);
 void ramdiskintr(void);
 void ramdiskrw(struct buf*);
-
-// kalloc.c
-void* kalloc(void);
-void kfree(void*);
-void kinit(void);
 
 // log.c
 void initlog(int, struct superblock*);

@@ -18,7 +18,7 @@ extern char trampoline[]; // trampoline.S
 
 // Make a direct-map page table for the kernel.
 pagetable_t kvmmake(void) {
-  pagetable_t kpgtbl = (pagetable_t)kalloc();
+  pagetable_t kpgtbl = (pagetable_t)frame_allocate();
 
   memset(kpgtbl, 0, PGSIZE);
 
@@ -92,7 +92,7 @@ pte_t* vmwalk(pagetable_t pagetable, uint64 va, int alloc) {
     if (*pte & PTE_V) {
       pagetable = (pagetable_t)PTE2PA(*pte);
     } else {
-      if (!alloc || (pagetable = (pde_t*)kalloc()) == 0) {
+      if (!alloc || (pagetable = (pde_t*)frame_allocate()) == 0) {
         return 0;
       }
       memset(pagetable, 0, PGSIZE);
@@ -192,7 +192,7 @@ void uvmunmap(pagetable_t pagetable, uint64 va, uint64 npages, int do_free) {
     }
     if (do_free) {
       uint64 pa = PTE2PA(*pte);
-      kfree((void*)pa);
+      frame_free((void*)pa);
     }
     *pte = 0;
   }
@@ -201,7 +201,7 @@ void uvmunmap(pagetable_t pagetable, uint64 va, uint64 npages, int do_free) {
 // create an empty user page table.
 // returns 0 if out of memory.
 pagetable_t uvmcreate() {
-  pagetable_t pagetable = (pagetable_t)kalloc();
+  pagetable_t pagetable = (pagetable_t)frame_allocate();
   if (pagetable == 0) {
     return 0;
   }
@@ -218,7 +218,7 @@ void uvmfirst(pagetable_t pagetable, uchar* src, uint sz) {
   if (sz >= PGSIZE) {
     panic("uvmfirst: more than a page");
   }
-  mem = kalloc();
+  mem = frame_allocate();
   memset(mem, 0, PGSIZE);
   vmmappages(pagetable, 0, PGSIZE, (uint64)mem, PTE_W | PTE_R | PTE_X | PTE_U);
   memmove(mem, src, sz);
@@ -236,7 +236,7 @@ uint64 uvmalloc(pagetable_t pagetable, uint64 oldsz, uint64 newsz, int xperm) {
 
   oldsz = PGROUNDUP(oldsz);
   for (a = oldsz; a < newsz; a += PGSIZE) {
-    mem = kalloc();
+    mem = frame_allocate();
     if (mem == 0) {
       uvmdealloc(pagetable, a, oldsz);
       return 0;
@@ -244,7 +244,7 @@ uint64 uvmalloc(pagetable_t pagetable, uint64 oldsz, uint64 newsz, int xperm) {
     memset(mem, 0, PGSIZE);
     if (vmmappages(pagetable, a, PGSIZE, (uint64)mem, PTE_R | PTE_U | xperm)
         != 0) {
-      kfree(mem);
+      frame_free(mem);
       uvmdealloc(pagetable, a, oldsz);
       return 0;
     }
@@ -284,7 +284,7 @@ void freewalk(pagetable_t pagetable) {
       panic("freewalk: leaf");
     }
   }
-  kfree((void*)pagetable);
+  frame_free((void*)pagetable);
 }
 
 // Free user memory pages,
@@ -317,12 +317,12 @@ int uvmcopy(pagetable_t old, pagetable_t new, uint64 sz) {
     }
     pa = PTE2PA(*pte);
     flags = PTE_FLAGS(*pte);
-    if ((mem = kalloc()) == 0) {
+    if ((mem = frame_allocate()) == 0) {
       goto err;
     }
     memmove(mem, (char*)pa, PGSIZE);
     if (vmmappages(new, i, PGSIZE, (uint64)mem, flags) != 0) {
-      kfree(mem);
+      frame_free(mem);
       goto err;
     }
   }

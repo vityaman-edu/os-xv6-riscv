@@ -28,7 +28,8 @@ OBJS = \
   $K/file/pipe.o \
   $K/sync/spinlock.o \
   $K/sync/sleeplock.o \
-  $K/alloc/kalloc.o \
+  $K/alloc/frame_allocator.o \
+	$K/alloc/malloc.o \
 	$K/alloc/list.o\
 	$K/alloc/buddy.o\
 	$K/alloc/bits.o
