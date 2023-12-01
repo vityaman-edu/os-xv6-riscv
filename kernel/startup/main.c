@@ -2,7 +2,7 @@
 #include <kernel/core/type.h>
 #include <kernel/defs.h>
 #include <kernel/hw/memlayout.h>
-#include <kernel/hw/arch/riscv/riscv.h>
+#include <kernel/hw/arch/riscv/register.h>
 
 volatile static int started = 0;
 

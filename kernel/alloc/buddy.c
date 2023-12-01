@@ -4,7 +4,7 @@
 #include <kernel/core/param.h>
 #include <kernel/defs.h>
 #include <kernel/hw/memlayout.h>
-#include <kernel/hw/arch/riscv/riscv.h>
+#include <kernel/hw/arch/riscv/register.h>
 #include <kernel/sync/spinlock.h>
 
 // The smallest block size

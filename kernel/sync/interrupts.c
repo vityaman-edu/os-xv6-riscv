@@ -1,5 +1,5 @@
 #include <kernel/defs.h>
-#include <kernel/hw/arch/riscv/riscv.h>
+#include <kernel/hw/arch/riscv/register.h>
 #include <kernel/process/proc.h>
 #include <kernel/sync/interrupts.h>
 

@@ -1,11 +1,10 @@
-        #
-        # interrupts and exceptions while in supervisor
-        # mode come here.
-        #
-        # the current stack is a kernel stack.
-        # push all registers, call kerneltrap().
-        # when kerneltrap() returns, restore registers, return.
-        #
+# interrupts and exceptions while in supervisor
+# mode come here.
+#
+# the current stack is a kernel stack.
+# push all registers, call kerneltrap().
+# when kerneltrap() returns, restore registers, return.
+
 .globl kerneltrap
 .globl kernelvec
 .align 4

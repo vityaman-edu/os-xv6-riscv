@@ -3,7 +3,7 @@
 #include <kernel/defs.h>
 #include <kernel/file/fs.h>
 #include <kernel/hw/memlayout.h>
-#include <kernel/hw/arch/riscv/riscv.h>
+#include <kernel/hw/arch/riscv/register.h>
 #include <kernel/process/elf.h>
 #include <kernel/memory/vm.h>
 

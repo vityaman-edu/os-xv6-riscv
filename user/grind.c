@@ -10,7 +10,7 @@
 #include "kernel/file/stat.h"
 #include "kernel/syscall/syscall.h"
 #include "kernel/hw/memlayout.h"
-#include "kernel/hw/arch/riscv/riscv.h"
+#include "kernel/hw/arch/riscv/register.h"
 #include "kernel/file/fcntl.h"
 
 // from FreeBSD.

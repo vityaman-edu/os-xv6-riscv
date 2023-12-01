@@ -10,7 +10,7 @@
 # a page boundary.
 #
 
-#include "../hw/arch/riscv/riscv.h"
+#include "../hw/arch/riscv/register.h"
 #include "../memory/vm.h"
 #include "../hw/memlayout.h"
 

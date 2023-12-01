@@ -8,7 +8,7 @@
 #include <kernel/file/file.h>
 #include <kernel/file/fs.h>
 #include <kernel/hw/memlayout.h>
-#include <kernel/hw/arch/riscv/riscv.h>
+#include <kernel/hw/arch/riscv/register.h>
 #include <kernel/process/proc.h>
 #include <kernel/sync/sleeplock.h>
 #include <kernel/sync/spinlock.h>

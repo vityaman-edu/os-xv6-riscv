@@ -5,9 +5,10 @@ OBJS = \
   $K/startup/entry.o \
   $K/startup/start.o \
   $K/startup/main.o \
-  $K/startup/kernelvec.o \
   $K/startup/trampoline.o \
   $K/console.o \
+  $K/hw/arch/riscv/kernelvec.o \
+  $K/hw/arch/riscv/trap.o \
   $K/hw/uart.o \
   $K/hw/plic.o \
   $K/hw/virtio_disk.o\
@@ -17,7 +18,6 @@ OBJS = \
   $K/process/proc.o \
   $K/process/swtch.o \
   $K/process/exec.o \
-  $K/trap.o \
   $K/syscall/syscall.o \
   $K/syscall/sysproc.o \
   $K/syscall/sysfile.o \
@@ -159,7 +159,11 @@ fs.img: mkfs/mkfs README $(UPROGS)
 
 clean: 
 	rm -f *.tex *.dvi *.idx *.aux *.log *.ind *.ilg \
-	*/*.o */*/*.o */*.d */*/*.d */*.asm */*.sym \
+	*/*.o */*.d \
+	*/*/*.o */*/*.d \
+	*/*/*/*.o */*/*/*.d \
+	*/*/*/*/*.o */*/*/*/*.d \
+	*/*.asm */*.sym \
 	$U/initcode $U/initcode.out $K/kernel fs.img \
 	mkfs/mkfs .gdbinit $U/usys.S \
 	$(UPROGS)

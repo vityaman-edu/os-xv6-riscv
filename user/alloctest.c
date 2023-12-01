@@ -1,7 +1,7 @@
 #include "kernel/core/param.h"
 #include "kernel/core/type.h"
 #include "kernel/file/stat.h"
-#include "kernel/hw/arch/riscv/riscv.h"
+#include "kernel/hw/arch/riscv/register.h"
 #include "kernel/file/stat.h"
 #include "kernel/hw/memlayout.h"
 #include "user/user.h"

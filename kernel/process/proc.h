@@ -2,7 +2,7 @@
 
 #include <kernel/core/param.h>
 #include <kernel/core/type.h>
-#include <kernel/hw/arch/riscv/riscv.h>
+#include <kernel/hw/arch/riscv/register.h>
 #include <kernel/memory/vm.h>
 #include <kernel/sync/spinlock.h>
 
