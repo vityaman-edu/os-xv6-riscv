@@ -3,8 +3,8 @@
 #include <kernel/alloc/list.h>
 #include <kernel/core/param.h>
 #include <kernel/defs.h>
-#include <kernel/hw/memlayout.h>
 #include <kernel/hw/arch/riscv/register.h>
+#include <kernel/hw/memlayout.h>
 #include <kernel/sync/spinlock.h>
 
 // The smallest block size
@@ -255,7 +255,7 @@ int bd_initfree(void* bd_left, void* bd_right) {
 int bd_mark_data_structures(byte* p) {
   int meta = p - (byte*)buddy_base;
   printf(
-      "bd: %d meta bytes for managing %d bytes of memory\n",
+      "[info][boot] buddy: %d meta bytes for managing %d bytes of memory\n",
       meta,
       BLK_SIZE(MAXSIZE)
   );
@@ -269,8 +269,8 @@ int bd_mark_unavailable(void* end, void* left) {
   if (unavailable > 0) {
     unavailable = ROUNDUP(unavailable, LEAF_SIZE);
   }
-  
-  printf("bd: 0x%x bytes unavailable\n", unavailable);
+
+  printf("[info][boot] buddy: 0x%x bytes unavailable\n", unavailable);
 
   void* bd_end = buddy_base + BLK_SIZE(MAXSIZE) - unavailable;
   bd_mark(bd_end, buddy_base + BLK_SIZE(MAXSIZE));
@@ -292,7 +292,8 @@ void buddy_init(void* base, void* end) {
   }
 
   printf(
-      "bd: memory sz is %d bytes; allocate an size array of length %d\n",
+      "[info][boot] buddy: memory sz is %d bytes; "
+      "allocate an size array of length %d\n",
       (byte*)end - p,
       buddy_size_groups_count
   );

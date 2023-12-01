@@ -40,10 +40,13 @@ typedef uint64* pagetable_t;
 typedef uint64 pte_t;
 typedef uint64 pde_t;
 
+typedef uint64 virt;
+typedef uint64 phys;
+
 void kvminit(void);
 void kvminithart(void);
 void kvmmap(pagetable_t, uint64, uint64, uint64, int);
-int vmmappages(pagetable_t, uint64, uint64, uint64, int);
+
 pagetable_t uvmcreate(void);
 void uvmfirst(pagetable_t, uchar*, uint);
 uint64 uvmalloc(pagetable_t, uint64, uint64, int);
@@ -52,8 +55,10 @@ int uvmcopy(pagetable_t, pagetable_t, uint64);
 void uvmfree(pagetable_t, uint64);
 void uvmunmap(pagetable_t, uint64, uint64, int);
 void uvmclear(pagetable_t, uint64);
+
 pte_t* vmwalk(pagetable_t, uint64, int);
 uint64 vmwalkaddr(pagetable_t, uint64);
+int vmmappages(pagetable_t, uint64, uint64, uint64, int);
 int vmcopyout(pagetable_t, uint64, char*, uint64);
 int vmcopyin(pagetable_t, char*, uint64, uint64);
 int vmcopyinstr(pagetable_t, char*, uint64, uint64);

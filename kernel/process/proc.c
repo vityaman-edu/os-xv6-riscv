@@ -501,7 +501,7 @@ void forkret(void) {
     fsinit(ROOTDEV);
   }
 
-  usertrapret();
+  usertrap_return();
 }
 
 // Atomically release lock and sleep on chan.

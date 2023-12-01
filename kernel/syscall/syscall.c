@@ -1,8 +1,8 @@
 #include <kernel/core/param.h>
 #include <kernel/core/type.h>
 #include <kernel/defs.h>
-#include <kernel/hw/memlayout.h>
 #include <kernel/hw/arch/riscv/register.h>
+#include <kernel/hw/memlayout.h>
 #include <kernel/memory/vm.h>
 #include <kernel/process/proc.h>
 #include <kernel/sync/spinlock.h>
@@ -117,16 +117,15 @@ static uint64 (*syscalls[])(void) = {
 };
 
 void syscall(void) {
-  int num;
-  struct proc* p = myproc();
+  struct proc* caller = myproc();
 
-  num = p->trapframe->a7;
+  uint64 num = caller->trapframe->a7;
   if (num > 0 && num < NELEM(syscalls) && syscalls[num]) {
     // Use num to lookup the system call function for num, call it,
     // and store its return value in p->trapframe->a0
-    p->trapframe->a0 = syscalls[num]();
+    caller->trapframe->a0 = syscalls[num]();
   } else {
-    printf("%d %s: unknown sys call %d\n", p->pid, p->name, num);
-    p->trapframe->a0 = -1;
+    printf("%d %s: unknown sys call %d\n", caller->pid, caller->name, num);
+    caller->trapframe->a0 = -1;
   }
 }
