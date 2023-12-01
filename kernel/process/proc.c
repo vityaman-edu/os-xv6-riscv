@@ -1,10 +1,11 @@
 #include <kernel/core/param.h>
 #include <kernel/core/type.h>
 #include <kernel/defs.h>
-#include <kernel/hw/memlayout.h>
 #include <kernel/hw/arch/riscv/riscv.h>
+#include <kernel/hw/memlayout.h>
 #include <kernel/memory/vm.h>
 #include <kernel/process/proc.h>
+#include <kernel/sync/interrupts.h>
 #include <kernel/sync/spinlock.h>
 
 struct cpu cpus[NCPU];
@@ -74,21 +75,18 @@ struct cpu* mycpu(void) {
 
 // Return the current struct proc *, or zero if none.
 struct proc* myproc(void) {
-  push_off();
-  struct cpu* c = mycpu();
-  struct proc* p = c->proc;
-  pop_off();
-  return p;
+  interrupts_disable_push();
+  struct cpu* cpu = mycpu();
+  struct proc* process = cpu->proc;
+  interrupts_disable_pop();
+  return process;
 }
 
 int allocpid() {
-  int pid;
-
   acquire(&pid_lock);
-  pid = nextpid;
+  int pid = nextpid;
   nextpid = nextpid + 1;
   release(&pid_lock);
-
   return pid;
 }
 
@@ -174,7 +172,9 @@ pagetable_t proc_pagetable(struct proc* p) {
   // at the highest user virtual address.
   // only the supervisor uses it, on the way
   // to/from user space, so not PTE_U.
-  if (vmmappages(pagetable, TRAMPOLINE, PGSIZE, (uint64)trampoline, PTE_R | PTE_X)
+  if (vmmappages(
+          pagetable, TRAMPOLINE, PGSIZE, (uint64)trampoline, PTE_R | PTE_X
+      )
       < 0) {
     uvmfree(pagetable, 0);
     return 0;

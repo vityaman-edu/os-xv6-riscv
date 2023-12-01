@@ -103,7 +103,7 @@ void uartputc(int c) {
 // to echo characters. it spins waiting for the uart's
 // output register to be empty.
 void uartputc_sync(int c) {
-  push_off();
+  interrupts_disable_push();
 
   if (panicked) {
     for (;;) {
@@ -118,7 +118,7 @@ void uartputc_sync(int c) {
 
   WriteReg(THR, c);
 
-  pop_off();
+  interrupts_disable_pop();
 }
 
 // if the UART is idle, and a character is waiting

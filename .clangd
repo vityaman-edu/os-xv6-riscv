@@ -20,7 +20,7 @@ Diagnostics:
       hicpp-avoid-c-arrays,
       llvmlibc-callee-namespace,
       llvmlibc-restrict-system-libc-headers,
-      
+      performance-no-int-to-ptr,
     ]
 
 InlayHints:

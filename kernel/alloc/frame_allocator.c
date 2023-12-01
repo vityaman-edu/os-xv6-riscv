@@ -15,8 +15,9 @@
 extern char end[];
 
 void frame_allocator_init() {
-  char* start = (char*)PGROUNDUP((uint64)end);
-  buddy_init(start, (void*)PHYSTOP);
+  void* start = (char*)PGROUNDUP((uint64)end);
+  void* end = (void*)PHYSTOP;
+  buddy_init(start, end);
 }
 
 void frame_free(void* phys) {

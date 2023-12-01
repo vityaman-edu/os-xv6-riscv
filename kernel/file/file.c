@@ -1,18 +1,17 @@
 /// Support functions for system calls that
 /// involve file descriptors.
 
-#include "kernel/core/type.h"
-#include "kernel/hw/arch/riscv/riscv.h"
-#include "kernel/defs.h"
-#include "kernel/core/param.h"
-#include "kernel/file/fs.h"
-#include "kernel/sync/spinlock.h"
-#include "kernel/sync/sleeplock.h"
-#include "kernel/file/stat.h"
-#include "kernel/process/proc.h"
-
-#include "kernel/alloc/buddy.h"
-#include "kernel/file/file.h"
+#include <kernel/alloc/malloc.h>
+#include <kernel/core/param.h>
+#include <kernel/core/type.h>
+#include <kernel/defs.h>
+#include <kernel/file/file.h>
+#include <kernel/file/fs.h>
+#include <kernel/file/stat.h>
+#include <kernel/hw/arch/riscv/riscv.h>
+#include <kernel/process/proc.h>
+#include <kernel/sync/sleeplock.h>
+#include <kernel/sync/spinlock.h>
 
 struct devsw devsw[NDEV];
 
@@ -22,7 +21,10 @@ void fileinit(void) {
 
 /// Allocate a file structure.
 struct file* filealloc(void) {
-  struct file* file = buddy_malloc(sizeof(struct file));
+  struct file* file = malloc(sizeof(struct file));
+  if (file == nullptr) {
+    return nullptr;
+  }
 
   file->type = FD_NONE;
   file->ref = 1;
@@ -77,7 +79,7 @@ void fileclose(struct file* file) {
     end_op();
   }
 
-  buddy_free(file);
+  free(file);
 }
 
 /// Get metadata about file f.

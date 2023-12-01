@@ -3,8 +3,8 @@
 #include <kernel/core/param.h>
 #include <kernel/core/type.h>
 #include <kernel/defs.h>
-#include <kernel/hw/memlayout.h>
 #include <kernel/hw/arch/riscv/riscv.h>
+#include <kernel/hw/memlayout.h>
 #include <kernel/process/proc.h>
 #include <kernel/sync/spinlock.h>
 
@@ -15,7 +15,7 @@ void initlock(struct spinlock* lock, char* name) {
 }
 
 void acquire(struct spinlock* lock) {
-  push_off(); // disable interrupts to avoid deadlock.
+  interrupts_disable_push(); // disable interrupts to avoid deadlock.
   if (holding(lock)) {
     panic("acquire");
   }
@@ -25,13 +25,13 @@ void acquire(struct spinlock* lock) {
   //   s1 = &lk->locked
   //   amoswap.w.aq a5, a5, (s1)
   uint64 try = 0;
-  const uint64 limit = 1000000;
+  const uint64 limit = 50000000;
   while (__sync_lock_test_and_set(&lock->locked, 1) != 0) {
     try += 1;
     if (try > limit) {
       try = 0;
       printf(
-          "[warn] possible deadlock on '%s' acquired by %d\n",
+          "[warn] contention on '%s' acquired by pid %d\n",
           lock->name,
           lock->cpu->proc->pid
       );
@@ -73,39 +73,11 @@ void release(struct spinlock* lock) {
   //   amoswap.w zero, zero, (s1)
   __sync_lock_release(&lock->locked);
 
-  pop_off();
+  interrupts_disable_pop();
 }
 
 // Check whether this cpu is holding the lock.
 // Interrupts must be off.
 int holding(struct spinlock* lock) {
   return (lock->locked && lock->cpu == mycpu());
-}
-
-// push_off/pop_off are like intr_off()/intr_on() except that they are matched:
-// it takes two pop_off()s to undo two push_off()s.  Also, if interrupts
-// are initially off, then push_off, pop_off leaves them off.
-
-void push_off(void) {
-  int old = intr_get();
-
-  intr_off();
-  if (mycpu()->noff == 0) {
-    mycpu()->intena = old;
-  }
-  mycpu()->noff += 1;
-}
-
-void pop_off(void) {
-  struct cpu* c = mycpu();
-  if (intr_get()) {
-    panic("pop_off - interruptible");
-  }
-  if (c->noff < 1) {
-    panic("pop_off");
-  }
-  c->noff -= 1;
-  if (c->noff == 0 && c->intena) {
-    intr_on();
-  }
 }
