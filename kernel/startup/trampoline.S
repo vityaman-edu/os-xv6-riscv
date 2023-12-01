@@ -10,9 +10,9 @@
 # a page boundary.
 #
 
-#include "../hardware/riscv.h"
+#include "../hw/arch/riscv/riscv.h"
 #include "../memory/vm.h"
-#include "../hardware/memlayout.h"
+#include "../hw/memlayout.h"
 
 .section trampsec
 .globl trampoline

@@ -1,12 +1,10 @@
 #include <kernel/core/param.h>
 #include <kernel/core/type.h>
 #include <kernel/defs.h>
-#include <kernel/hardware/memlayout.h>
-#include <kernel/hardware/riscv.h>
+#include <kernel/hw/memlayout.h>
+#include <kernel/hw/arch/riscv/riscv.h>
 
-//
-// the riscv Platform Level Interrupt Controller (PLIC).
-//
+/// the riscv Platform Level Interrupt Controller (PLIC).
 
 void plicinit(void) {
   // set desired IRQ priorities non-zero (otherwise disabled).

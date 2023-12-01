@@ -6,8 +6,8 @@
 #include <kernel/core/param.h>
 #include <kernel/core/type.h>
 #include <kernel/defs.h>
-#include <kernel/hardware/memlayout.h>
-#include <kernel/hardware/riscv.h>
+#include <kernel/hw/memlayout.h>
+#include <kernel/hw/arch/riscv/riscv.h>
 #include <kernel/sync/spinlock.h>
 
 /// First address after kernel, defined by `kernel.ld`.

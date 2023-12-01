@@ -8,9 +8,9 @@ OBJS = \
   $K/startup/kernelvec.o \
   $K/startup/trampoline.o \
   $K/console.o \
-  $K/hardware/uart.o \
-  $K/hardware/plic.o \
-  $K/hardware/virtio_disk.o\
+  $K/hw/uart.o \
+  $K/hw/plic.o \
+  $K/hw/virtio_disk.o\
   $K/lib/printf.o \
   $K/lib/string.o \
   $K/memory/vm.o \

@@ -5,8 +5,8 @@
 #include "kernel/file/fs.h"
 #include "kernel/file/stat.h"
 #include "kernel/syscall/syscall.h"
-#include "kernel/hardware/memlayout.h"
-#include "kernel/hardware/riscv.h"
+#include "kernel/hw/memlayout.h"
+#include "kernel/hw/arch/riscv/riscv.h"
 #include "kernel/file/fcntl.h"
 #include "kernel/memory/vm.h"
 

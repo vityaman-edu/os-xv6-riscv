@@ -1,7 +1,7 @@
 #pragma once
 
 #include <kernel/core/type.h>
-#include <kernel/hardware/riscv.h>
+#include <kernel/hw/arch/riscv/riscv.h>
 #include <kernel/memory/vm.h>
 
 struct buf;

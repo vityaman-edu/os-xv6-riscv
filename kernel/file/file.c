@@ -2,7 +2,7 @@
 /// involve file descriptors.
 
 #include "kernel/core/type.h"
-#include "kernel/hardware/riscv.h"
+#include "kernel/hw/arch/riscv/riscv.h"
 #include "kernel/defs.h"
 #include "kernel/core/param.h"
 #include "kernel/file/fs.h"
