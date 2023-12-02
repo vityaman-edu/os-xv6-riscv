@@ -8,11 +8,12 @@
 #define PGROUNDUP(sz) (((sz) + PGSIZE - 1) & ~(PGSIZE - 1))
 #define PGROUNDDOWN(a) (((a)) & ~(PGSIZE - 1))
 
-#define PTE_V (1L << 0) // valid
-#define PTE_R (1L << 1)
-#define PTE_W (1L << 2)
-#define PTE_X (1L << 3)
-#define PTE_U (1L << 4) // user can access
+#define PTE_V (1L << 0)   // is valid
+#define PTE_R (1L << 1)   // is readable
+#define PTE_W (1L << 2)   // is writtable
+#define PTE_X (1L << 3)   // is executable
+#define PTE_U (1L << 4)   // is user accessible
+#define PTE_COW (1L << 8) // is writtable, but can be copied on write
 
 // shift a physical address to the right place for a PTE.
 #define PA2PTE(pa) ((((uint64)pa) >> 12) << 10)
@@ -34,6 +35,7 @@
 
 #ifndef __ASSEMBLER__
 
+#include <kernel/core/result.h>
 #include <kernel/core/type.h>
 
 typedef uint64* pagetable_t;
@@ -51,7 +53,7 @@ pagetable_t uvmcreate(void);
 void uvmfirst(pagetable_t, uchar*, uint);
 uint64 uvmalloc(pagetable_t, uint64, uint64, int);
 uint64 uvmdealloc(pagetable_t, uint64, uint64);
-int uvmcopy(pagetable_t, pagetable_t, uint64);
+rstatus_t uvmcopy(pagetable_t, pagetable_t, uint64);
 void uvmfree(pagetable_t, uint64);
 void uvmunmap(pagetable_t, uint64, uint64, int);
 void uvmclear(pagetable_t, uint64);

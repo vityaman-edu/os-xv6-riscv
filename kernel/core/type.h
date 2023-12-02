@@ -10,6 +10,7 @@ typedef unsigned int uint32;
 typedef unsigned long uint64;
 
 typedef uint64 size_t;
+typedef size_t index_t;
 
 typedef uint8 byte;
 

@@ -1,11 +1,12 @@
 #include <kernel/core/param.h>
+#include <kernel/core/result.h>
 #include <kernel/core/type.h>
 #include <kernel/defs.h>
 #include <kernel/file/fs.h>
-#include <kernel/hw/memlayout.h>
 #include <kernel/hw/arch/riscv/register.h>
-#include <kernel/process/elf.h>
+#include <kernel/hw/memlayout.h>
 #include <kernel/memory/vm.h>
+#include <kernel/process/elf.h>
 
 /*
  * the kernel's page table.
@@ -296,41 +297,38 @@ void uvmfree(pagetable_t pagetable, uint64 sz) {
   freewalk(pagetable);
 }
 
-// Given a parent process's page table, copy
-// its memory into a child's page table.
-// Copies both the page table and the
-// physical memory.
-// returns 0 on success, -1 on failure.
-// frees any allocated pages on failure.
-int uvmcopy(pagetable_t old, pagetable_t new, uint64 sz) {
-  pte_t* pte;
-  uint64 pa, i;
-  uint flags;
-  char* mem;
-
-  for (i = 0; i < sz; i += PGSIZE) {
-    if ((pte = vmwalk(old, i, 0)) == 0) {
+/// Given a parent process's page table, copy its memory into a
+/// child's page table. Copies both the page table and the
+/// physical memory. returns 0 on success, -1 on failure.
+/// frees any allocated pages on failure.
+rstatus_t uvmcopy(pagetable_t old, pagetable_t new, uint64 size) {
+  for (index_t i = 0; i < size; i += PGSIZE) {
+    pte_t* pte = vmwalk(old, i, 0);
+    if (pte == nullptr) {
       panic("uvmcopy: pte should exist");
     }
     if ((*pte & PTE_V) == 0) {
       panic("uvmcopy: page not present");
     }
-    pa = PTE2PA(*pte);
-    flags = PTE_FLAGS(*pte);
-    if ((mem = frame_allocate().ptr) == 0) {
-      goto err;
+
+    uint64 phys = PTE2PA(*pte);
+    int flags = PTE_FLAGS(*pte);
+
+    frame frame = frame_allocate();
+    if (!frame.is_valid) {
+      uvmunmap(new, /*va: */ 0, /*npages: */ (i / PGSIZE), /*do_free: */ true);
+      return BAD_ALLOC;
     }
-    memmove(mem, (char*)pa, PGSIZE);
-    if (vmmappages(new, i, PGSIZE, (uint64)mem, flags) != 0) {
-      frame_free(frame_parse(mem));
-      goto err;
+
+    memmove(frame.ptr, (char*)phys, PGSIZE);
+    if (vmmappages(new, i, PGSIZE, frame.addr, flags) != 0) {
+      frame_free(frame);
+      uvmunmap(new, /*va: */ 0, /*npages: */ (i / PGSIZE), /*do_free: */ true);
+      return BAD_ALLOC;
     }
   }
-  return 0;
 
-err:
-  uvmunmap(new, 0, i / PGSIZE, 1);
-  return -1;
+  return OK;
 }
 
 // mark a PTE invalid for user access.
