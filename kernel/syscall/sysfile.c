@@ -447,7 +447,7 @@ uint64 sys_exec(void) {
       argv[i] = 0;
       break;
     }
-    argv[i] = frame_allocate();
+    argv[i] = frame_allocate().ptr;
     if (argv[i] == 0) {
       goto bad;
     }
@@ -459,14 +459,14 @@ uint64 sys_exec(void) {
   int ret = exec(path, argv);
 
   for (i = 0; i < NELEM(argv) && argv[i] != 0; i++) {
-    frame_free(argv[i]);
+    frame_free(frame_parse(argv[i]));
   }
 
   return ret;
 
 bad:
   for (i = 0; i < NELEM(argv) && argv[i] != 0; i++) {
-    frame_free(argv[i]);
+    frame_free(frame_parse(argv[i]));
   }
   return -1;
 }

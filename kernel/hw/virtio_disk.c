@@ -119,9 +119,9 @@ void virtio_disk_init(void) {
   }
 
   // allocate and zero queue memory.
-  disk.desc = frame_allocate();
-  disk.avail = frame_allocate();
-  disk.used = frame_allocate();
+  disk.desc = frame_allocate().ptr;
+  disk.avail = frame_allocate().ptr;
+  disk.used = frame_allocate().ptr;
   if (!disk.desc || !disk.avail || !disk.used) {
     panic("virtio disk kalloc");
   }

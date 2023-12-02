@@ -9,6 +9,8 @@ typedef unsigned short uint16;
 typedef unsigned int uint32;
 typedef unsigned long uint64;
 
+typedef uint64 size_t;
+
 typedef uint8 byte;
 
 typedef int bool;
