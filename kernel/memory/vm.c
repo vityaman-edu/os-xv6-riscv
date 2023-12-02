@@ -372,6 +372,9 @@ rstatus_t uvm_handle_page_fault(pagetable_t pagetable, virt virt) {
 }
 
 rstatus_t uvm_copy_on_write(pte_t* pte) {
+  if (FLAG_DISABLED(*pte, PTE_COW)) {
+    panic("uvm_cow: pte must be COW");
+  }
   if (pte == nullptr) {
     panic("uvm_cow: pte is null");
   }
