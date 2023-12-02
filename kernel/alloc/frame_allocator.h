@@ -6,8 +6,9 @@
 /// with size `PGSIZE`. `ptr` is PGSIZE aligned.
 /// `ptr` can be `nullptr` when allocation fails.
 typedef union {
-  void* ptr;   // a pointer to frame start
-  uint64 addr; // `ptr` as an integer
+  void* ptr;     // a pointer to frame start
+  uint64 addr;   // `ptr` as an integer
+  bool is_valid; // is a nullptr? DO NOT COMPARE WITH `TRUE`
 } frame;
 
 /// Validates a memory address and creates
