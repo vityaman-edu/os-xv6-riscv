@@ -21,6 +21,7 @@ Diagnostics:
       llvmlibc-callee-namespace,
       llvmlibc-restrict-system-libc-headers,
       performance-no-int-to-ptr,
+      misc-no-recursion,
     ]
 
 InlayHints:

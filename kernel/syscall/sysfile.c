@@ -447,7 +447,7 @@ uint64 sys_exec(void) {
       argv[i] = 0;
       break;
     }
-    argv[i] = frame_allocate();
+    argv[i] = frame_allocate().ptr;
     if (argv[i] == 0) {
       goto bad;
     }
@@ -459,14 +459,14 @@ uint64 sys_exec(void) {
   int ret = exec(path, argv);
 
   for (i = 0; i < NELEM(argv) && argv[i] != 0; i++) {
-    frame_free(argv[i]);
+    frame_free(frame_parse(argv[i]));
   }
 
   return ret;
 
 bad:
   for (i = 0; i < NELEM(argv) && argv[i] != 0; i++) {
-    frame_free(argv[i]);
+    frame_free(frame_parse(argv[i]));
   }
   return -1;
 }
@@ -489,9 +489,10 @@ uint64 sys_pipe(void) {
     fileclose(wf);
     return -1;
   }
-  if (vmcopyout(p->pagetable, fdarray, (char*)&fd0, sizeof(fd0)) < 0
-      || vmcopyout(p->pagetable, fdarray + sizeof(fd0), (char*)&fd1, sizeof(fd1))
-             < 0) {
+  if (vmcopyout(p->pagetable, fdarray, (char*)&fd0, sizeof(fd0)) != OK
+      || vmcopyout(
+             p->pagetable, fdarray + sizeof(fd0), (char*)&fd1, sizeof(fd1)
+         ) != OK) {
     p->ofile[fd0] = 0;
     p->ofile[fd1] = 0;
     fileclose(rf);

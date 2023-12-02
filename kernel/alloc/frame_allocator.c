@@ -9,7 +9,15 @@
 #include <kernel/defs.h>
 #include <kernel/hw/arch/riscv/register.h>
 #include <kernel/hw/memlayout.h>
+#include <kernel/memory/vm.h>
 #include <kernel/sync/spinlock.h>
+
+#define FRAME_MAX_COUNT (PHYSTOP / PGSIZE)
+
+static struct {
+  ref_count_t ref_count[FRAME_MAX_COUNT];
+  struct spinlock lock;
+} frame_info;
 
 /// First address after kernel, defined by `kernel.ld`.
 extern char end[];
@@ -18,12 +26,64 @@ void frame_allocator_init() {
   void* start = (char*)PGROUNDUP((uint64)end);
   void* end = (void*)PHYSTOP;
   buddy_init(start, end);
+
+  initlock(&frame_info.lock, "frame_info");
+  memset(frame_info.ref_count, 0, FRAME_MAX_COUNT);
 }
 
-void frame_free(void* phys) {
-  buddy_free(phys);
+frame frame_parse(void* ptr) {
+  const uint64 addr = (uint64)ptr;
+  if (addr % PGSIZE != 0) {
+    panic("frame.ptr is not PGSIZE aligned");
+  }
+  if (addr >= PHYSTOP) {
+    panic("frame.ptr is out of PHYSTOP");
+  }
+  return (frame){ptr};
 }
 
-void* frame_allocate(void) {
-  return buddy_malloc(PGSIZE);
+size_t frame_index(frame frame) {
+  if (frame.addr < (uint64)end) {
+    panic("frame.ptr is in the kernel memory");
+  }
+  return frame.addr / PGSIZE;
+}
+
+void frame_free(frame frame) {
+  const size_t index = frame_index(frame);
+  acquire(&frame_info.lock);
+  if (frame_info.ref_count[index] == 0) {
+    printf("frame allocator: phys = %p\n", frame.ptr);
+    panic("frame allocator: tried to free not referenced address");
+  }
+  frame_info.ref_count[index] -= 1;
+  if (frame_info.ref_count[index] == 0) {
+    buddy_free(frame.ptr);
+  }
+  release(&frame_info.lock);
+}
+
+frame frame_allocate() {
+  void* ptr = buddy_malloc(PGSIZE);
+  if (ptr == nullptr) {
+    return (frame){.ptr = nullptr};
+  }
+  const frame frame = frame_parse(ptr);
+  frame_reference(frame);
+  return frame;
+}
+
+void frame_reference(frame frame) {
+  const size_t index = frame_index(frame);
+  acquire(&frame_info.lock);
+  frame_info.ref_count[index] += 1;
+  release(&frame_info.lock);
+}
+
+ref_count_t frame_ref_count(frame frame) {
+  const size_t index = frame_index(frame);
+  acquire(&frame_info.lock);
+  const ref_count_t count = frame_info.ref_count[index];
+  release(&frame_info.lock);
+  return count;
 }

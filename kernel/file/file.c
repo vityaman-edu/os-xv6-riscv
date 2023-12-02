@@ -3,6 +3,7 @@
 
 #include <kernel/alloc/malloc.h>
 #include <kernel/core/param.h>
+#include <kernel/core/result.h>
 #include <kernel/core/type.h>
 #include <kernel/defs.h>
 #include <kernel/file/file.h>
@@ -95,8 +96,8 @@ int filestat(struct file* file, uint64 addr) {
 
     iunlock(file->ip);
 
-    int status = vmcopyout(proc->pagetable, addr, (char*)&stat, sizeof(stat));
-    if (status < 0) {
+    rstatus_t status = vmcopyout(proc->pagetable, addr, (char*)&stat, sizeof(stat));
+    if (status != OK) {
       return -1;
     }
 
