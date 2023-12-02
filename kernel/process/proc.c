@@ -1,4 +1,5 @@
 #include <kernel/core/param.h>
+#include <kernel/core/result.h>
 #include <kernel/core/type.h>
 #include <kernel/defs.h>
 #include <kernel/hw/arch/riscv/register.h>
@@ -386,7 +387,7 @@ int wait(uint64 addr) {
           if (addr != 0
               && vmcopyout(
                      p->pagetable, addr, (char*)&pp->xstate, sizeof(pp->xstate)
-                 ) < 0) {
+                 ) != OK) {
             release(&pp->lock);
             release(&wait_lock);
             return -1;
@@ -590,10 +591,12 @@ int killed(struct proc* p) {
 // depending on usr_dst.
 // Returns 0 on success, -1 on error.
 int either_copyout(int user_dst, uint64 dst, void* src, uint64 len) {
-  struct proc* p = myproc();
   if (user_dst) {
-    return vmcopyout(p->pagetable, dst, src, len);
+    struct proc* process = myproc();
+    const rstatus_t status = vmcopyout(process->pagetable, dst, src, len);
+    return (status == OK) ? (0) : (-1);
   }
+
   memmove((char*)dst, src, len);
   return 0;
 }

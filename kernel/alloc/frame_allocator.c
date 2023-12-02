@@ -14,8 +14,6 @@
 
 #define FRAME_MAX_COUNT (PHYSTOP / PGSIZE)
 
-typedef uint16 ref_count_t;
-
 static struct {
   ref_count_t ref_count[FRAME_MAX_COUNT];
   struct spinlock lock;
@@ -38,9 +36,6 @@ frame frame_parse(void* ptr) {
   if (addr % PGSIZE != 0) {
     panic("frame.ptr is not PGSIZE aligned");
   }
-  if (addr < (uint64)end) {
-    panic("frame.ptr is in the kernel memory");
-  }
   if (addr >= PHYSTOP) {
     panic("frame.ptr is out of PHYSTOP");
   }
@@ -48,6 +43,9 @@ frame frame_parse(void* ptr) {
 }
 
 size_t frame_index(frame frame) {
+  if (frame.addr < (uint64)end) {
+    panic("frame.ptr is in the kernel memory");
+  }
   return frame.addr / PGSIZE;
 }
 
@@ -80,4 +78,12 @@ void frame_reference(frame frame) {
   acquire(&frame_info.lock);
   frame_info.ref_count[index] += 1;
   release(&frame_info.lock);
+}
+
+ref_count_t frame_ref_count(frame frame) {
+  const size_t index = frame_index(frame);
+  acquire(&frame_info.lock);
+  const ref_count_t count = frame_info.ref_count[index];
+  release(&frame_info.lock);
+  return count;
 }

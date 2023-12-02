@@ -1,6 +1,8 @@
 #pragma once
 
 #define PAGETABLE_SIZE 512
+#define PAGETABLE_DEPTH 3
+#define PAGETABLE_LEAF_LEVEL ((PAGETABLE_DEPTH)-1)
 
 #define PGSIZE 4096 // bytes per page
 #define PGSHIFT 12  // bits of offset within a page
@@ -35,6 +37,7 @@
 
 #ifndef __ASSEMBLER__
 
+#include <kernel/alloc/frame_allocator.h>
 #include <kernel/core/result.h>
 #include <kernel/core/type.h>
 
@@ -44,6 +47,8 @@ typedef uint64 pde_t;
 
 typedef uint64 virt;
 typedef uint64 phys;
+
+bool virt_is_valid(virt virt);
 
 void kvminit(void);
 void kvminithart(void);
@@ -58,11 +63,26 @@ void uvmfree(pagetable_t, uint64);
 void uvmunmap(pagetable_t, uint64, uint64, int);
 void uvmclear(pagetable_t, uint64);
 
+/// Tries to handle page fault because of COW or Lazy-Init.
+rstatus_t uvm_handle_page_fault(pagetable_t, virt);
+
+/// Handles COW page fault. Prevents writting into COW page.
+rstatus_t uvm_copy_on_write(pte_t* pte);
+
 pte_t* vmwalk(pagetable_t, uint64, int);
 uint64 vmwalkaddr(pagetable_t, uint64);
 int vmmappages(pagetable_t, uint64, uint64, uint64, int);
-int vmcopyout(pagetable_t, uint64, char*, uint64);
+rstatus_t vmcopyout(pagetable_t, uint64, char*, uint64);
 int vmcopyin(pagetable_t, char*, uint64, uint64);
 int vmcopyinstr(pagetable_t, char*, uint64, uint64);
+
+/// @return a frame that is referenced by the `pte`.
+frame pte_frame(pte_t pte);
+
+/// Prints `pte` using printf. For debugging.
+void pte_print(pte_t pte);
+
+/// Prints `pagetable` using printf. For debugging.
+void vm_print(pagetable_t pagetable);
 
 #endif

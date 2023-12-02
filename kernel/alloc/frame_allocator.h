@@ -15,6 +15,8 @@ typedef union {
 /// a frame.
 frame frame_parse(void* ptr);
 
+typedef uint16 ref_count_t;
+
 /// Initializes kernel frame allocator subsystem.
 void frame_allocator_init();
 
@@ -32,3 +34,5 @@ void frame_free(frame frame);
 /// Increments a given frame ref-counter to prevent
 /// deallocation.
 void frame_reference(frame frame);
+
+ref_count_t frame_ref_count(frame frame);

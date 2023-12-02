@@ -489,9 +489,10 @@ uint64 sys_pipe(void) {
     fileclose(wf);
     return -1;
   }
-  if (vmcopyout(p->pagetable, fdarray, (char*)&fd0, sizeof(fd0)) < 0
-      || vmcopyout(p->pagetable, fdarray + sizeof(fd0), (char*)&fd1, sizeof(fd1))
-             < 0) {
+  if (vmcopyout(p->pagetable, fdarray, (char*)&fd0, sizeof(fd0)) != OK
+      || vmcopyout(
+             p->pagetable, fdarray + sizeof(fd0), (char*)&fd1, sizeof(fd1)
+         ) != OK) {
     p->ofile[fd0] = 0;
     p->ofile[fd1] = 0;
     fileclose(rf);

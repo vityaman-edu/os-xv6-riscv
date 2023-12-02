@@ -1,8 +1,8 @@
 #include <kernel/core/param.h>
 #include <kernel/core/type.h>
 #include <kernel/defs.h>
-#include <kernel/hw/memlayout.h>
 #include <kernel/hw/arch/riscv/register.h>
+#include <kernel/hw/memlayout.h>
 #include <kernel/process/elf.h>
 #include <kernel/process/proc.h>
 #include <kernel/sync/spinlock.h>
@@ -109,7 +109,7 @@ int exec(char* path, char** argv) {
     if (sp < stackbase) {
       goto bad;
     }
-    if (vmcopyout(pagetable, sp, argv[argc], strlen(argv[argc]) + 1) < 0) {
+    if (vmcopyout(pagetable, sp, argv[argc], strlen(argv[argc]) + 1) != OK) {
       goto bad;
     }
     ustack[argc] = sp;
@@ -122,7 +122,8 @@ int exec(char* path, char** argv) {
   if (sp < stackbase) {
     goto bad;
   }
-  if (vmcopyout(pagetable, sp, (char*)ustack, (argc + 1) * sizeof(uint64)) < 0) {
+  if (vmcopyout(pagetable, sp, (char*)ustack, (argc + 1) * sizeof(uint64))
+      != OK) {
     goto bad;
   }
 

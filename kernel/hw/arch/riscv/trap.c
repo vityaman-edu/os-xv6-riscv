@@ -1,9 +1,11 @@
 #include <kernel/core/param.h>
+#include <kernel/core/result.h>
 #include <kernel/core/type.h>
 #include <kernel/defs.h>
 #include <kernel/hw/arch/riscv/register.h>
 #include <kernel/hw/arch/riscv/trap.h>
 #include <kernel/hw/memlayout.h>
+#include <kernel/memory/vm.h>
 #include <kernel/process/proc.h>
 #include <kernel/sync/spinlock.h>
 
@@ -111,6 +113,9 @@ void usertrap() {
   case SCAUSE_ENVIRONMENT_CALL: {
     usertrap_syscall(process);
   } break;
+  case SCAUSE_STORE_OR_AMO_PAGE_FAULT: {
+    usertrap_page_fault(process, r_stval());
+  } break;
   default: {
     int pid = process->pid;
     printf("usertrap: unexpected scause %p\n", r_scause());
@@ -187,6 +192,17 @@ void usertrap_syscall(struct proc* caller) {
   intr_on();
 
   syscall();
+}
+
+void usertrap_page_fault(struct proc* caller, virt virt) {
+  switch (uvm_handle_page_fault(caller->pagetable, virt)) {
+  case OK: {
+    // Do nothing, riscv will repeat memory access.
+  } break;
+  default: {
+    setkilled(caller);
+  } break;
+  }
 }
 
 void interrupt_plic() {

@@ -134,7 +134,7 @@ int piperead(struct pipe* pi, uint64 addr, int n) {
       break;
     }
     ch = pi->data[pi->nread++ % PIPESIZE];
-    if (vmcopyout(pr->pagetable, addr + i, &ch, 1) == -1) {
+    if (vmcopyout(pr->pagetable, addr + i, &ch, 1) != OK) {
       break;
     }
   }

@@ -37,3 +37,4 @@ void usertrap();
 void usertrap_return();
 
 void usertrap_syscall(struct proc* caller);
+void usertrap_page_fault(struct proc* caller, virt virt);
